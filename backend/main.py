@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from routes.debug import router as debug_router
 from routes.process import router as process_router
 
 load_dotenv()
@@ -23,3 +24,4 @@ app.add_middleware(
 )
 
 app.include_router(process_router)
+app.include_router(debug_router, prefix="/debug")
