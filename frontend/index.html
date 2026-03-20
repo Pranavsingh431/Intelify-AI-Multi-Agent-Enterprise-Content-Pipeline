@@ -1,12 +1,803 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html class="dark" lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Phase 1 App</title>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>AI Workflow Studio - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-dim": "#131313",
+              "on-secondary-fixed-variant": "#3c3b3b",
+              "secondary-fixed": "#c8c6c5",
+              "on-primary-fixed": "#ffffff",
+              "on-primary-fixed-variant": "#e2e2e2",
+              "on-secondary-fixed": "#1b1c1c",
+              "surface-container": "#1f1f1f",
+              "surface-container-high": "#2a2a2a",
+              "primary-container": "#d4d4d4",
+              outline: "#919191",
+              "surface-container-lowest": "#0e0e0e",
+              "surface-variant": "#353535",
+              "tertiary-fixed": "#006e16",
+              "tertiary-fixed-dim": "#00530e",
+              "tertiary-container": "#00a827",
+              "on-surface-variant": "#c6c6c6",
+              "surface-container-highest": "#353535",
+              "inverse-on-surface": "#303030",
+              "on-tertiary": "#002203",
+              surface: "#131313",
+              "primary-fixed": "#5d5f5f",
+              "on-secondary": "#1b1c1c",
+              "surface-container-low": "#1b1b1b",
+              "on-secondary-container": "#e5e2e1",
+              "on-primary-container": "#000000",
+              "primary-fixed-dim": "#454747",
+              "secondary-container": "#474746",
+              "on-surface": "#e2e2e2",
+              "on-background": "#e2e2e2",
+              "on-error-container": "#ffdad6",
+              "on-primary": "#1a1c1c",
+              primary: "#ffffff",
+              background: "#131313",
+              tertiary: "#72ff70",
+              "on-error": "#690005",
+              "inverse-surface": "#e2e2e2",
+              "on-tertiary-fixed-variant": "#72ff70",
+              "error-container": "#93000a",
+              secondary: "#c8c6c5",
+              "surface-bright": "#393939",
+              "on-tertiary-fixed": "#ffffff",
+              "outline-variant": "#474747",
+              "secondary-fixed-dim": "#adabaa",
+              "inverse-primary": "#5d5f5f",
+              "on-tertiary-container": "#000000",
+              error: "#ffb4ab",
+              "surface-tint": "#c6c6c7",
+            },
+            fontFamily: {
+              headline: ["Space Grotesk"],
+              body: ["Inter"],
+              label: ["Space Grotesk"],
+            },
+            borderRadius: {
+              DEFAULT: "0px",
+              lg: "0px",
+              xl: "0px",
+              full: "9999px",
+            },
+            animation: {
+              "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+              "terminal-blink": "blink 1s step-end infinite",
+              "data-entry": "dataEntry 0.5s ease-out forwards",
+              scanline: "scanline 8s linear infinite",
+              "breathing-glow": "breathingGlow 3s ease-in-out infinite",
+              glitch: "glitch 0.3s cubic-bezier(.25,.46,.45,.94) infinite",
+            },
+            keyframes: {
+              blink: {
+                "0%, 100%": { opacity: 1 },
+                "50%": { opacity: 0 },
+              },
+              dataEntry: {
+                "0%": { opacity: 0, transform: "translateY(10px)" },
+                "100%": { opacity: 1, transform: "translateY(0)" },
+              },
+              scanline: {
+                "0%": { transform: "translateY(-100%)" },
+                "100%": { transform: "translateY(100%)" },
+              },
+              breathingGlow: {
+                "0%, 100%": { "box-shadow": "0 0 5px rgba(255,255,255,0.05)" },
+                "50%": { "box-shadow": "0 0 15px rgba(255,255,255,0.15)" },
+              },
+              glitch: {
+                "0%": { transform: "translate(0)" },
+                "20%": { transform: "translate(-2px, 2px)" },
+                "40%": { transform: "translate(-2px, -2px)" },
+                "60%": { transform: "translate(2px, 2px)" },
+                "80%": { transform: "translate(2px, -2px)" },
+                "100%": { transform: "translate(0)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 200, "GRAD" 0, "opsz" 24;
+      }
+      .scanline-overlay-container {
+        position: relative;
+        overflow: hidden;
+      }
+      .scanline-overlay-active::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100px;
+        background: linear-gradient(
+          to bottom,
+          transparent,
+          rgba(255, 255, 255, 0.03),
+          transparent
+        );
+        pointer-events: none;
+        z-index: 50;
+        animation: scanline 8s linear infinite;
+      }
+      .btn-glitch-hover:hover {
+        animation: glitch 0.2s linear infinite;
+      }
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0e0e0e;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #353535;
+      }
+
+      .stagger-1 {
+        animation-delay: 0.1s;
+        opacity: 0;
+      }
+      .stagger-2 {
+        animation-delay: 0.2s;
+        opacity: 0;
+      }
+      .stagger-3 {
+        animation-delay: 0.3s;
+        opacity: 0;
+      }
+      .stagger-4 {
+        animation-delay: 0.4s;
+        opacity: 0;
+      }
+      .stagger-5 {
+        animation-delay: 0.5s;
+        opacity: 0;
+      }
+    </style>
   </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+  <body class="bg-surface text-on-surface font-body overflow-hidden">
+    <header
+      class="bg-[#131313] text-white font-['Space_Grotesk'] tracking-widest uppercase text-sm docked full-width top-0 border-b-0 flex justify-between items-center w-full px-6 h-16 fixed z-50"
+    >
+      <div
+        class="text-xl font-bold tracking-tighter text-white font-['Space_Grotesk'] uppercase"
+      >
+        AI Workflow Studio
+      </div>
+      <div class="hidden md:flex items-center gap-8">
+        <a id="navStudio" class="text-white border-b-2 border-white py-1" href="javascript:void(0)">Studio</a>
+        <a id="navLibrary" class="text-gray-500 hover:bg-[#2a2a2a] transition-colors py-1" href="javascript:void(0)"
+          >Library</a
+        >
+        <a id="navAgents" class="text-gray-500 hover:bg-[#2a2a2a] transition-colors py-1" href="javascript:void(0)"
+          >Agents</a
+        >
+        <a id="navSettings" class="text-gray-500 hover:bg-[#2a2a2a] transition-colors py-1" href="javascript:void(0)"
+          >Settings</a
+        >
+      </div>
+      <div class="flex items-center gap-4">
+        <span
+          class="material-symbols-outlined cursor-pointer hover:bg-[#2a2a2a] transition-colors p-2"
+          >notifications</span
+        >
+        <span
+          class="material-symbols-outlined cursor-pointer hover:bg-[#2a2a2a] transition-colors p-2"
+          >account_circle</span
+        >
+      </div>
+    </header>
+
+    <div class="flex h-screen pt-16">
+      <aside
+        class="bg-[#0e0e0e] text-[#72ff70] font-['Space_Grotesk'] uppercase tracking-wider text-xs docked left-0 h-full w-64 border-r border-[#353535] hidden md:flex flex-col"
+      >
+        <div class="p-6 border-b border-[#353535]">
+          <div class="text-white font-bold text-lg mb-1">OPERATOR_01</div>
+          <div class="text-[#72ff70] opacity-80 flex items-center gap-2">
+            <span class="w-2 h-2 bg-[#72ff70] animate-pulse"></span> SYSTEM_READY
+          </div>
+        </div>
+        <nav class="flex-grow py-4">
+          <div class="px-4 mb-4">
+            <button
+              id="newWorkflowBtn"
+              class="w-full bg-white text-black font-bold py-3 text-sm hover:bg-primary-container transition-colors uppercase tracking-widest"
+            >
+              NEW WORKFLOW
+            </button>
+          </div>
+          <ul class="space-y-1">
+            <li
+              id="navStudioSide"
+              data-nav-target="studioSection"
+              class="bg-[#ffffff] text-black font-bold flex items-center gap-4 px-6 py-3 cursor-pointer"
+            >
+              <span
+                class="material-symbols-outlined"
+                style="font-variation-settings: 'FILL' 1"
+                >grid_view</span
+              >
+              <span>Studio</span>
+            </li>
+            <li
+              id="navLibrarySide"
+              data-nav-target="librarySection"
+              class="text-gray-400 hover:text-white hover:bg-[#1f1f1f] flex items-center gap-4 px-6 py-3 cursor-pointer transition-colors"
+            >
+              <span class="material-symbols-outlined">folder_open</span>
+              <span>Library</span>
+            </li>
+            <li
+              id="navAgentsSide"
+              data-nav-target="agentsSection"
+              class="text-gray-400 hover:text-white hover:bg-[#1f1f1f] flex items-center gap-4 px-6 py-3 cursor-pointer transition-colors"
+            >
+              <span class="material-symbols-outlined">smart_toy</span>
+              <span>Agents</span>
+            </li>
+            <li
+              id="navSettingsSide"
+              data-nav-target="settingsSection"
+              class="text-gray-400 hover:text-white hover:bg-[#1f1f1f] flex items-center gap-4 px-6 py-3 cursor-pointer transition-colors"
+            >
+              <span class="material-symbols-outlined">settings</span>
+              <span>Settings</span>
+            </li>
+          </ul>
+        </nav>
+        <div class="p-4 border-t border-[#353535] space-y-2 opacity-60">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[14px]">sensors</span>
+              <span>System Health: 98%</span>
+            </div>
+          </div>
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[14px]">timer</span>
+              <span>Uptime: 14d</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main
+        class="flex-grow overflow-y-auto bg-surface-dim relative scanline-overlay-container scanline-overlay-active"
+      >
+        <div id="studioSection">
+        <div class="p-8 max-w-7xl mx-auto grid grid-cols-12 gap-6 relative z-10">
+          <section class="col-span-12 lg:col-span-8 space-y-6">
+            <div class="bg-surface-container-low p-6 border-l-4 border-white animate-breathing-glow">
+              <h2 class="font-label text-xs uppercase tracking-[0.2em] text-outline mb-4">
+                Input Console / Prompt
+              </h2>
+              <div class="relative">
+                <textarea
+                  class="w-full bg-surface-container-lowest border border-outline-variant p-4 font-label text-lg text-primary focus:border-white focus:ring-0 placeholder:text-surface-variant h-32 resize-none"
+                  placeholder="ENTER WORKFLOW PARAMETERS..."
+                ></textarea>
+                <div class="absolute bottom-4 right-4 flex items-center gap-4">
+                  <span class="font-label text-[10px] text-outline">CHARS: 0 / TOKENS: 0</span>
+                  <button
+                    id="run-pipeline-btn"
+                    class="bg-primary text-on-primary-container px-6 py-2 font-label font-bold text-sm tracking-tighter hover:bg-primary-container transition-all flex items-center gap-2 btn-glitch-hover"
+                  >
+                    <span class="material-symbols-outlined text-sm">play_arrow</span>
+                    &gt; RUN_PIPELINE
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-surface-container-low p-1">
+              <div class="bg-surface-container-lowest p-6 border border-outline-variant">
+                <div class="flex justify-between items-center mb-6">
+                  <h2 class="font-label text-xs uppercase tracking-[0.2em] text-outline">
+                    Generated Output / Log
+                  </h2>
+                  <div class="flex gap-2">
+                    <span class="w-2 h-2 bg-tertiary"></span>
+                    <span class="w-2 h-2 bg-surface-variant"></span>
+                    <span class="w-2 h-2 bg-surface-variant"></span>
+                  </div>
+                </div>
+                <div
+                  id="generated-output-container"
+                  class="font-label text-sm leading-relaxed space-y-2 text-on-surface-variant opacity-90 overflow-hidden"
+                >
+                  <p class="text-tertiary">[SYSTEM] Waiting for pipeline run...</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <aside class="col-span-12 lg:col-span-4 space-y-6">
+            <div class="bg-surface-container border border-outline-variant p-6">
+              <h2 class="font-label text-xs uppercase tracking-[0.2em] text-outline mb-6">
+                Agent Trace
+              </h2>
+              <div id="agent-trace-container" class="space-y-8 relative">
+                <div class="absolute left-[11px] top-2 bottom-2 w-[1px] bg-outline-variant"></div>
+                <div class="relative flex items-start gap-4 animate-data-entry stagger-1">
+                  <div class="w-6 h-6 border border-outline-variant bg-surface-container z-10"></div>
+                  <div>
+                    <div class="font-label text-xs font-bold">AWAITING RUN</div>
+                    <div class="text-outline font-label text-[10px]">[IDLE]</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-surface-container-highest p-6">
+              <div class="text-center space-y-2 mb-8">
+                <h2 class="font-label text-[10px] uppercase tracking-[0.3em] text-on-surface-variant">
+                  Trust Score
+                </h2>
+                <div id="trust-score-value" class="text-5xl font-label font-bold tracking-tighter text-tertiary animate-pulse-slow">
+                  0.00%
+                </div>
+                <div class="w-full h-1 bg-surface-container mt-4">
+                  <div id="trust-score-bar" class="h-full bg-tertiary" style="width: 0%"></div>
+                </div>
+              </div>
+              <div id="claims-container" class="space-y-4">
+                <div class="text-[10px] text-outline font-label">No compliance data yet.</div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="px-8 pb-8 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+          <div class="bg-surface-container-low border border-outline-variant p-4 flex items-center gap-4">
+            <div class="p-3 bg-surface-container-highest">
+              <span class="material-symbols-outlined text-white">memory</span>
+            </div>
+            <div>
+              <div class="font-label text-[10px] text-outline uppercase tracking-wider">
+                Node Utilization
+              </div>
+              <div class="font-label text-lg font-bold">42.8 GB / 128 GB</div>
+            </div>
+          </div>
+          <div class="bg-surface-container-low border border-outline-variant p-4 flex items-center gap-4">
+            <div class="p-3 bg-surface-container-highest">
+              <span class="material-symbols-outlined text-white">lan</span>
+            </div>
+            <div>
+              <div class="font-label text-[10px] text-outline uppercase tracking-wider">
+                Stream Latency
+              </div>
+              <div class="font-label text-lg font-bold">14ms AVG</div>
+            </div>
+          </div>
+          <div class="bg-surface-container-low border border-outline-variant p-4 flex items-center gap-4">
+            <div class="p-3 bg-surface-container-highest">
+              <span class="material-symbols-outlined text-white">security</span>
+            </div>
+            <div>
+              <div class="font-label text-[10px] text-outline uppercase tracking-wider">
+                Security Layer
+              </div>
+              <div class="font-label text-lg font-bold text-tertiary animate-pulse-slow">
+                ENCRYPTED
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <div id="librarySection" class="hidden p-8 max-w-7xl mx-auto">
+          <div class="bg-surface-container-low border border-outline-variant p-6">
+            <h2 class="font-label text-xs uppercase tracking-[0.2em] text-outline mb-6">
+              Workflow Library
+            </h2>
+            <div id="libraryGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="bg-surface-container border border-outline-variant p-4">
+                <div class="text-xs text-outline">Workflow</div>
+                <div class="text-sm text-white mt-1">No saved workflows yet.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="agentsSection" class="hidden p-8 max-w-7xl mx-auto">
+          <div class="bg-surface-container-low border border-outline-variant p-6">
+            <h2 class="font-label text-xs uppercase tracking-[0.2em] text-outline mb-6">
+              Agents
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="bg-surface-container border border-outline-variant p-4 hover:border-white transition-colors">
+                <div class="text-xs text-outline">AGENT</div>
+                <div class="text-white font-bold mt-1">Content Agent</div>
+                <div class="text-[11px] text-outline mt-2">
+                  Generates structured content from user input using LLM.
+                </div>
+                <div class="mt-3 text-[10px] text-tertiary">Status: Active</div>
+              </div>
+
+              <div class="bg-surface-container border border-outline-variant p-4 hover:border-white transition-colors">
+                <div class="text-xs text-outline">AGENT</div>
+                <div class="text-white font-bold mt-1">Compliance Agent</div>
+                <div class="text-[11px] text-outline mt-2">
+                  Extracts and verifies factual claims with web-assisted checks.
+                </div>
+                <div class="mt-3 text-[10px] text-tertiary">Status: Active</div>
+              </div>
+
+              <div class="bg-surface-container border border-outline-variant p-4 hover:border-white transition-colors">
+                <div class="text-xs text-outline">AGENT</div>
+                <div class="text-white font-bold mt-1">Optimization Agent</div>
+                <div class="text-[11px] text-outline mt-2">
+                  Future module for output quality and performance optimization.
+                </div>
+                <div class="mt-3 text-[10px] text-outline">Status: Planned</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="settingsSection" class="hidden p-8 max-w-7xl mx-auto">
+          <div class="bg-surface-container-low border border-outline-variant p-6">
+            <h2 class="font-label text-xs uppercase tracking-[0.2em] text-outline mb-6">
+              Settings
+            </h2>
+
+            <div class="space-y-4">
+              <div class="bg-surface-container border border-outline-variant p-4">
+                <div class="text-xs text-outline">OPENROUTER API</div>
+                <input
+                  type="text"
+                  value="**************"
+                  class="w-full bg-surface-container-low border border-outline-variant p-2 mt-2 text-sm text-on-surface"
+                  readonly
+                />
+              </div>
+
+              <div class="bg-surface-container border border-outline-variant p-4">
+                <div class="text-xs text-outline">LANGSEARCH API</div>
+                <input
+                  type="text"
+                  value="**************"
+                  class="w-full bg-surface-container-low border border-outline-variant p-2 mt-2 text-sm text-on-surface"
+                  readonly
+                />
+              </div>
+
+              <div class="bg-surface-container border border-outline-variant p-4">
+                <div class="flex justify-between items-center mt-1">
+                  <span class="text-sm text-white">Enable Web Verification</span>
+                  <input type="checkbox" checked />
+                </div>
+                <div class="flex justify-between items-center mt-4">
+                  <span class="text-sm text-white">Enable Compliance Scoring</span>
+                  <input type="checkbox" checked />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div
+      class="fixed top-0 right-0 w-1/2 h-full bg-gradient-to-l from-white/[0.02] to-transparent pointer-events-none"
+    ></div>
+
+    <script>
+      const textarea = document.querySelector("textarea");
+      const runBtn = document.getElementById("run-pipeline-btn");
+      const newWorkflowBtn = document.getElementById("newWorkflowBtn");
+      const outputContainer = document.getElementById("generated-output-container");
+      const trustScoreEl = document.getElementById("trust-score-value");
+      const trustScoreBar = document.getElementById("trust-score-bar");
+      const claimsContainer = document.getElementById("claims-container");
+      const agentTrace = document.getElementById("agent-trace-container");
+      const charsCounter = document.querySelector(".font-label.text-\\[10px\\].text-outline");
+      const libraryGrid = document.getElementById("libraryGrid");
+      const navStudio = document.getElementById("navStudio");
+      const navLibrary = document.getElementById("navLibrary");
+      const navAgents = document.getElementById("navAgents");
+      const navSettings = document.getElementById("navSettings");
+      const navStudioSide = document.getElementById("navStudioSide");
+      const navLibrarySide = document.getElementById("navLibrarySide");
+      const navAgentsSide = document.getElementById("navAgentsSide");
+      const navSettingsSide = document.getElementById("navSettingsSide");
+
+      let workflowHistory = [];
+
+      function showSection(sectionId) {
+        const sections = ["studioSection", "librarySection", "agentsSection", "settingsSection"];
+        sections.forEach((id) => document.getElementById(id).classList.add("hidden"));
+        document.getElementById(sectionId).classList.remove("hidden");
+      }
+
+      function setActiveNav(activeId) {
+        const topNavs = ["navStudio", "navLibrary", "navAgents", "navSettings"];
+        topNavs.forEach((id) => {
+          const el = document.getElementById(id);
+          el.classList.remove("text-white", "border-b-2", "border-white");
+          el.classList.add("text-gray-500");
+        });
+
+        const active = document.getElementById(activeId);
+        active.classList.add("text-white", "border-b-2", "border-white");
+        active.classList.remove("text-gray-500");
+
+        const sideMap = {
+          navStudio: navStudioSide,
+          navLibrary: navLibrarySide,
+          navAgents: navAgentsSide,
+          navSettings: navSettingsSide,
+        };
+
+        [navStudioSide, navLibrarySide, navAgentsSide, navSettingsSide].forEach((el) => {
+          el.classList.remove("bg-[#ffffff]", "text-black", "font-bold");
+          el.classList.add("text-gray-400");
+        });
+
+        const activeSide = sideMap[activeId];
+        activeSide.classList.add("bg-[#ffffff]", "text-black", "font-bold");
+        activeSide.classList.remove("text-gray-400");
+      }
+
+      function renderLibrary() {
+        if (!workflowHistory.length) {
+          libraryGrid.innerHTML = `
+            <div class="bg-surface-container border border-outline-variant p-4">
+              <div class="text-xs text-outline">Workflow</div>
+              <div class="text-sm text-white mt-1">No saved workflows yet.</div>
+            </div>
+          `;
+          return;
+        }
+
+        libraryGrid.innerHTML = "";
+        workflowHistory.forEach((item, index) => {
+          const card = document.createElement("div");
+          card.className = "bg-surface-container border border-outline-variant p-4";
+          card.innerHTML = `
+            <div class="text-xs text-outline">Workflow</div>
+            <div class="text-sm text-white mt-1">${escapeHtml(item.prompt)}</div>
+            <div class="flex justify-between items-center mt-4 text-[10px] text-outline">
+              <span>${escapeHtml(item.timestamp)}</span>
+              <span class="text-tertiary">${escapeHtml(item.trust)}</span>
+            </div>
+            <button data-load-index="${index}" class="mt-3 text-xs text-white border border-outline px-3 py-1 hover:bg-white hover:text-black transition">
+              Load
+            </button>
+          `;
+          libraryGrid.appendChild(card);
+        });
+
+        libraryGrid.querySelectorAll("button[data-load-index]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const idx = Number(btn.getAttribute("data-load-index"));
+            const selected = workflowHistory[idx];
+            if (!selected) return;
+            textarea.value = selected.fullPrompt;
+            const chars = textarea.value.length;
+            const tokens = Math.ceil(chars / 4);
+            charsCounter.textContent = `CHARS: ${chars} / TOKENS: ${tokens}`;
+            showSection("studioSection");
+            setActiveNav("navStudio");
+          });
+        });
+      }
+
+      navStudio.onclick = () => {
+        showSection("studioSection");
+        setActiveNav("navStudio");
+      };
+      navLibrary.onclick = () => {
+        showSection("librarySection");
+        setActiveNav("navLibrary");
+        renderLibrary();
+      };
+      navAgents.onclick = () => {
+        showSection("agentsSection");
+        setActiveNav("navAgents");
+      };
+      navSettings.onclick = () => {
+        showSection("settingsSection");
+        setActiveNav("navSettings");
+      };
+
+      navStudioSide.onclick = () => {
+        showSection("studioSection");
+        setActiveNav("navStudio");
+      };
+      navLibrarySide.onclick = () => {
+        showSection("librarySection");
+        setActiveNav("navLibrary");
+        renderLibrary();
+      };
+      navAgentsSide.onclick = () => {
+        showSection("agentsSection");
+        setActiveNav("navAgents");
+      };
+      navSettingsSide.onclick = () => {
+        showSection("settingsSection");
+        setActiveNav("navSettings");
+      };
+
+      newWorkflowBtn.onclick = () => {
+        textarea.value = "";
+        charsCounter.textContent = "CHARS: 0 / TOKENS: 0";
+        outputContainer.innerHTML = "";
+        trustScoreEl.innerText = "0%";
+        trustScoreBar.style.width = "0%";
+        claimsContainer.innerHTML = "";
+        agentTrace.innerHTML = '<div class="text-outline text-xs">No workflow executed</div>';
+        showSection("studioSection");
+        setActiveNav("navStudio");
+      };
+
+      document.querySelectorAll(".material-symbols-outlined").forEach((icon) => {
+        icon.addEventListener("click", () => {
+          console.log("Clicked:", icon.innerText);
+        });
+      });
+
+      textarea.addEventListener("input", () => {
+        const chars = textarea.value.length;
+        const tokens = Math.ceil(chars / 4);
+        charsCounter.textContent = `CHARS: ${chars} / TOKENS: ${tokens}`;
+      });
+
+      runBtn.addEventListener("click", async (event) => {
+        event.preventDefault();
+        const input = textarea.value.trim();
+        if (!input) return;
+
+        runBtn.disabled = true;
+        runBtn.innerText = "Running...";
+
+        try {
+          const res = await fetch("http://127.0.0.1:8000/process", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ text: input }),
+          });
+
+          const response = await res.json();
+          const data = response?.data || response;
+
+          renderOutput(data);
+          renderAgents(data.logs || []);
+          renderCompliance(data.compliance || { trust_score: 0, claims: [] });
+          saveWorkflow(input, data.compliance || { trust_score: 0 });
+          outputContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (err) {
+          console.error(err);
+          alert("Error running pipeline");
+        }
+
+        runBtn.disabled = false;
+        runBtn.innerHTML =
+          '<span class="material-symbols-outlined text-sm">play_arrow</span> &gt; RUN_PIPELINE';
+      });
+
+      function saveWorkflow(input, compliance) {
+        const trust = `${(Number(compliance?.trust_score || 0) * 100).toFixed(0)}%`;
+        workflowHistory.unshift({
+          prompt: input.length > 40 ? `${input.slice(0, 40)}...` : input,
+          fullPrompt: input,
+          timestamp: "Just now",
+          trust,
+        });
+        workflowHistory = workflowHistory.slice(0, 8);
+        renderLibrary();
+      }
+
+      function renderOutput(data) {
+        outputContainer.innerHTML = "";
+        const p = document.createElement("p");
+        p.className = "text-white";
+        p.innerText = data.generated_content || "No output generated.";
+        outputContainer.appendChild(p);
+      }
+
+      function renderAgents(logs) {
+        agentTrace.innerHTML = "";
+        if (!Array.isArray(logs) || logs.length === 0) {
+          agentTrace.innerHTML = '<div class="text-outline text-xs">No workflow executed</div>';
+          return;
+        }
+
+        const line = document.createElement("div");
+        line.className = "absolute left-[11px] top-2 bottom-2 w-[1px] bg-outline-variant";
+        agentTrace.appendChild(line);
+
+        logs.forEach((log, i) => {
+          const div = document.createElement("div");
+          div.className = "relative flex items-start gap-4 animate-data-entry";
+          div.style.animationDelay = `${(i + 1) * 0.1}s`;
+          div.innerHTML = `
+            <div class="w-6 h-6 bg-tertiary flex items-center justify-center z-10">
+              <span class="material-symbols-outlined text-black text-xs font-bold" style="font-variation-settings: 'wght' 700;">check</span>
+            </div>
+            <div>
+              <div class="font-label text-xs font-bold">${String(log.agent || "agent").replace(/_/g, " ").toUpperCase()}</div>
+              <div class="text-tertiary font-label text-[10px]">[DONE]</div>
+            </div>
+          `;
+          agentTrace.appendChild(div);
+        });
+      }
+
+      function renderCompliance(compliance) {
+        const trust = Number(compliance?.trust_score || 0);
+        trustScoreEl.innerText = `${(trust * 100).toFixed(2)}%`;
+        trustScoreBar.style.width = `${Math.max(0, Math.min(100, trust * 100))}%`;
+        claimsContainer.innerHTML = "";
+
+        const claims = Array.isArray(compliance?.claims) ? compliance.claims : [];
+        if (!claims.length) {
+          claimsContainer.innerHTML =
+            '<div class="text-[10px] text-outline font-label">No compliance data returned.</div>';
+          return;
+        }
+
+        claims.forEach((claim) => {
+          const div = document.createElement("div");
+          div.className = "flex flex-col gap-1";
+          let color = "text-outline";
+          if (claim.status === "SUPPORTED") color = "text-tertiary";
+          if (claim.status === "UNSUPPORTED") color = "text-error";
+          const source =
+            (Array.isArray(claim.evidence) && claim.evidence[0] && claim.evidence[0].url) || "";
+
+          div.innerHTML = `
+            <div class="flex justify-between items-center text-[10px] font-label">
+              <span class="text-white">${escapeHtml(claim.text || "")}</span>
+              <span class="${color}">[${escapeHtml(claim.status || "INSUFFICIENT")}]</span>
+            </div>
+            <div class="text-[9px] text-outline font-body">
+              ${source ? `<a href="${escapeAttr(source)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source)}</a>` : ""}
+            </div>
+          `;
+          claimsContainer.appendChild(div);
+        });
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function escapeAttr(value) {
+        return String(value).replace(/"/g, "&quot;");
+      }
+
+      renderLibrary();
+    </script>
   </body>
 </html>

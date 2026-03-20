@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from services.compliance import ComplianceServiceError, run_compliance_check
-from services.llm import LLMServiceError, generate_content
+from agents.orchestrator import run_pipeline
+from services.compliance import ComplianceServiceError
+from services.llm import LLMServiceError
 
 router = APIRouter()
 
@@ -14,13 +15,11 @@ class ProcessRequest(BaseModel):
 @router.post("/process")
 def process_text(payload: ProcessRequest) -> dict:
     try:
-        generated_content = generate_content(payload.text)
-        compliance = run_compliance_check(generated_content)
+        pipeline_result = run_pipeline(payload.text)
     except (LLMServiceError, ComplianceServiceError) as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     return {
         "status": "success",
-        "generated_content": generated_content,
-        "compliance": compliance,
+        "data": pipeline_result,
     }
