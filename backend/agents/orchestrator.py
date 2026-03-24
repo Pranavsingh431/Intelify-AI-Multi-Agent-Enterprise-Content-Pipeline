@@ -1,5 +1,6 @@
 from services.compliance import run_compliance_check
 from services.llm import generate_content
+from services.transform import transform_content
 
 
 def content_agent(input_text: str) -> dict:
@@ -22,6 +23,16 @@ def compliance_agent(content: str) -> dict:
     }
 
 
+def localization_agent(content: str) -> dict:
+    localized_output = transform_content(content)
+
+    return {
+        "agent": "localization_agent",
+        "input": content,
+        "output": localized_output,
+    }
+
+
 def run_pipeline(user_input: str) -> dict:
     logs = []
 
@@ -33,8 +44,12 @@ def run_pipeline(user_input: str) -> dict:
     compliance_step = compliance_agent(generated_content)
     logs.append(compliance_step)
 
+    localization_step = localization_agent(generated_content)
+    logs.append(localization_step)
+
     return {
         "generated_content": generated_content,
         "compliance": compliance_step["output"],
+        "localization": localization_step["output"],
         "logs": logs,
     }

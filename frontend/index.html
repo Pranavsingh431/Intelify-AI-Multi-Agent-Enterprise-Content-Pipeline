@@ -329,6 +329,35 @@
                   <p class="text-tertiary">[SYSTEM] Waiting for pipeline run...</p>
                 </div>
                 <div id="outputLog" class="mt-3 space-y-1"></div>
+                <div id="approvalContainer" class="hidden mt-4 border border-outline-variant p-3 transition-all duration-300 ease-in-out">
+                  <div class="text-xs text-outline mb-2">Approval Status: <span id="approvalStatusText" class="text-white">Awaiting Approval</span></div>
+                  <div class="flex gap-2">
+                    <button id="approveBtn" class="text-xs text-white border border-outline px-3 py-1 hover:bg-white hover:text-black transition">Approve</button>
+                    <button id="rejectBtn" class="text-xs text-white border border-outline px-3 py-1 hover:bg-white hover:text-black transition">Reject</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="localizationSection" class="hidden bg-surface-container-low p-1">
+              <div class="bg-surface-container-lowest p-6 border border-outline-variant">
+                <h2 class="font-label text-xs uppercase tracking-[0.2em] text-outline mb-4">
+                  Localization Output
+                </h2>
+                <div class="space-y-4">
+                  <div>
+                    <div class="text-[10px] text-outline mb-1">LinkedIn Version</div>
+                    <div id="localizedLinkedin" class="text-sm text-white whitespace-pre-wrap"></div>
+                  </div>
+                  <div>
+                    <div class="text-[10px] text-outline mb-1">Twitter Version</div>
+                    <div id="localizedTwitter" class="text-sm text-white whitespace-pre-wrap"></div>
+                  </div>
+                  <div>
+                    <div class="text-[10px] text-outline mb-1">Blog Version</div>
+                    <div id="localizedBlog" class="text-sm text-white whitespace-pre-wrap"></div>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
@@ -451,14 +480,14 @@
                 <div id="agent-log-compliance" class="mt-2 space-y-1 max-h-20 overflow-y-auto"></div>
               </div>
 
-              <div id="agent-sources" class="bg-surface-container border border-outline-variant p-4 hover:border-white hover:scale-[1.02] transition-all duration-300 ease-in-out">
+              <div id="agent-localization" class="bg-surface-container border border-outline-variant p-4 hover:border-white hover:scale-[1.02] transition-all duration-300 ease-in-out">
                 <div class="text-xs text-outline">AGENT</div>
-                <div class="text-white font-bold mt-1">Source Validation Agent</div>
+                <div class="text-white font-bold mt-1">Localization Agent</div>
                 <div class="text-[11px] text-outline mt-2">
-                  Validates supporting evidence from the workflow output.
+                  Transforms generated content for platform-specific formats.
                 </div>
                 <div class="status mt-3 text-[10px] text-outline">Status: IDLE</div>
-                <div id="agent-log-sources" class="mt-2 space-y-1 max-h-20 overflow-y-auto"></div>
+                <div id="agent-log-localization" class="mt-2 space-y-1 max-h-20 overflow-y-auto"></div>
               </div>
             </div>
           </div>
@@ -507,6 +536,14 @@
       const traceModal = document.getElementById("traceModal");
       const traceModalContent = document.getElementById("traceModalContent");
       const traceModalClose = document.getElementById("traceModalClose");
+      const approvalContainer = document.getElementById("approvalContainer");
+      const approvalStatusText = document.getElementById("approvalStatusText");
+      const approveBtn = document.getElementById("approveBtn");
+      const rejectBtn = document.getElementById("rejectBtn");
+      const localizationSection = document.getElementById("localizationSection");
+      const localizedLinkedin = document.getElementById("localizedLinkedin");
+      const localizedTwitter = document.getElementById("localizedTwitter");
+      const localizedBlog = document.getElementById("localizedBlog");
 
       const SUPABASE_URL = "https://hwdeernpbylzilzsevzm.supabase.co";
       const SUPABASE_ANON_KEY =
@@ -530,13 +567,17 @@
       let currentRunTrace = {
         content: [],
         compliance: [],
-        sources: [],
+        approval: [],
+        localization: [],
       };
+      let isApproved = null;
+      let approvalResolver = null;
 
       const AGENTS = [
         { id: "content", label: "Content Agent" },
         { id: "compliance", label: "Compliance Agent" },
-        { id: "sources", label: "Source Validation Agent" },
+        { id: "approval", label: "Approval Step" },
+        { id: "localization", label: "Localization Agent" },
       ];
 
       async function getUser() {
@@ -609,7 +650,8 @@
         currentRunTrace = {
           content: [],
           compliance: [],
-          sources: [],
+          approval: [],
+          localization: [],
         };
       }
 
@@ -627,26 +669,27 @@
 
       function updateAgentStatus(agent, status) {
         const el = document.getElementById(`agent-${agent}`);
-        if (!el) return;
-        const statusEl = el.querySelector(".status");
-        if (statusEl) {
-          statusEl.innerText = `Status: ${status}`;
-          statusEl.classList.remove("text-outline", "text-tertiary", "text-white", "text-error");
-          if (status === "RUNNING") statusEl.classList.add("text-white");
-          else if (status === "DONE") statusEl.classList.add("text-tertiary");
-          else if (status === "ERROR") statusEl.classList.add("text-error");
-          else statusEl.classList.add("text-outline");
-        }
+        if (el) {
+          const statusEl = el.querySelector(".status");
+          if (statusEl) {
+            statusEl.innerText = `Status: ${status}`;
+            statusEl.classList.remove("text-outline", "text-tertiary", "text-white", "text-error");
+            if (status === "RUNNING") statusEl.classList.add("text-white");
+            else if (status === "DONE") statusEl.classList.add("text-tertiary");
+            else if (status === "ERROR") statusEl.classList.add("text-error");
+            else statusEl.classList.add("text-outline");
+          }
 
-        el.classList.remove("opacity-50", "opacity-100", "border-outline-variant", "border-white", "border-tertiary", "border-error", "animate-pulse");
-        if (status === "RUNNING") {
-          el.classList.add("opacity-100", "border-white", "animate-pulse");
-        } else if (status === "DONE") {
-          el.classList.add("opacity-100", "border-tertiary");
-        } else if (status === "ERROR") {
-          el.classList.add("opacity-100", "border-error");
-        } else {
-          el.classList.add("opacity-50", "border-outline-variant");
+          el.classList.remove("opacity-50", "opacity-100", "border-outline-variant", "border-white", "border-tertiary", "border-error", "animate-pulse");
+          if (status === "RUNNING") {
+            el.classList.add("opacity-100", "border-white", "animate-pulse");
+          } else if (status === "DONE") {
+            el.classList.add("opacity-100", "border-tertiary");
+          } else if (status === "ERROR") {
+            el.classList.add("opacity-100", "border-error");
+          } else {
+            el.classList.add("opacity-50", "border-outline-variant");
+          }
         }
 
         const existing = agentSteps.find((step) => step.id === agent);
@@ -665,12 +708,13 @@
 
       function appendAgentLog(agent, message) {
         const logEl = document.getElementById(`agent-log-${agent}`);
-        if (!logEl) return;
-        const line = document.createElement("div");
-        line.className = "text-xs opacity-70 animate-data-entry";
-        line.innerText = message;
-        logEl.appendChild(line);
-        autoScroll(logEl);
+        if (logEl) {
+          const line = document.createElement("div");
+          line.className = "text-xs opacity-70 animate-data-entry";
+          line.innerText = message;
+          logEl.appendChild(line);
+          autoScroll(logEl);
+        }
         if (Array.isArray(currentRunTrace[agent])) {
           currentRunTrace[agent].push(message);
         }
@@ -823,6 +867,12 @@
         trustScoreEl.innerText = "0%";
         trustScoreBar.style.width = "0%";
         claimsContainer.innerHTML = "";
+        setApprovalState(null);
+        approvalContainer.classList.add("hidden");
+        localizationSection.classList.add("hidden");
+        localizedLinkedin.textContent = "";
+        localizedTwitter.textContent = "";
+        localizedBlog.textContent = "";
         resetAgentStates();
         showSection("studioSection");
         setActiveNav("navStudio");
@@ -853,6 +903,28 @@
         const tokens = Math.ceil(chars / 4);
         charsCounter.textContent = `CHARS: ${chars} / TOKENS: ${tokens}`;
       });
+
+      if (approveBtn) {
+        approveBtn.onclick = () => {
+          setApprovalState(true);
+          showToast("Approved");
+          if (approvalResolver) {
+            approvalResolver(true);
+            approvalResolver = null;
+          }
+        };
+      }
+
+      if (rejectBtn) {
+        rejectBtn.onclick = () => {
+          setApprovalState(false);
+          showToast("Rejected");
+          if (approvalResolver) {
+            approvalResolver(false);
+            approvalResolver = null;
+          }
+        };
+      }
 
       runBtn.addEventListener("click", async (event) => {
         event.preventDefault();
@@ -888,10 +960,14 @@
         return contentData?.compliance || { trust_score: 0, claims: [] };
       }
 
-      async function runSourceValidation(complianceData) {
-        return {
-          hasClaims: Array.isArray(complianceData?.claims) && complianceData.claims.length > 0,
-        };
+      async function runLocalizationAgent(contentData) {
+        return (
+          contentData?.localization || {
+            linkedin: "",
+            twitter: "",
+            blog: contentData?.generated_content || "",
+          }
+        );
       }
 
       async function runPipeline(input) {
@@ -899,6 +975,9 @@
         outputLog.innerHTML = "";
         resetTraceState();
         resetAgentStates();
+        setApprovalState(null);
+        approvalContainer.classList.add("hidden");
+        localizationSection.classList.add("hidden");
         addLog("[System] Pipeline started...");
 
         try {
@@ -919,17 +998,32 @@
           appendAgentLog("compliance", "Compliance checks completed.");
           updateAgentStatus("compliance", "DONE");
           addLog("[Compliance Agent] Claims verified...");
+          renderCompliance(complianceData);
 
-          updateAgentStatus("sources", "RUNNING");
-          appendAgentLog("sources", "Collecting source references...");
-          await delay(250);
-          appendAgentLog("sources", "Finalizing source validation...");
-          await runSourceValidation(complianceData);
-          appendAgentLog("sources", "Source validation completed.");
-          updateAgentStatus("sources", "DONE");
+          updateAgentStatus("approval", "RUNNING");
+          appendAgentLog("approval", "Awaiting human decision...");
+          approvalContainer.classList.remove("hidden");
+          setApprovalState(null);
+          const approved = await waitForApprovalDecision();
+
+          if (!approved) {
+            updateAgentStatus("approval", "ERROR");
+            appendAgentLog("approval", "Rejected by user. Pipeline halted.");
+            setRunButtonState(false);
+            return;
+          }
+
+          updateAgentStatus("approval", "DONE");
+          appendAgentLog("approval", "Approved by user.");
+
+          updateAgentStatus("localization", "RUNNING");
+          appendAgentLog("localization", "Preparing localized variants...");
+          const localizationData = await runLocalizationAgent(contentData);
+          appendAgentLog("localization", "Localization output ready.");
+          updateAgentStatus("localization", "DONE");
+          renderLocalization(localizationData);
 
           await renderOutput(contentData);
-          renderCompliance(complianceData);
 
           await saveWorkflow(
             input,
@@ -952,7 +1046,8 @@
           console.error(err);
           updateAgentStatus("content", "ERROR");
           updateAgentStatus("compliance", "ERROR");
-          updateAgentStatus("sources", "ERROR");
+          updateAgentStatus("approval", "ERROR");
+          updateAgentStatus("localization", "ERROR");
           showToast("⚠ Something went wrong");
         }
 
@@ -1065,6 +1160,13 @@
 
       async function renderOutput(data) {
         await streamOutput(data.generated_content || "No output generated.");
+      }
+
+      function renderLocalization(localization) {
+        localizationSection.classList.remove("hidden");
+        localizedLinkedin.textContent = localization?.linkedin || "";
+        localizedTwitter.textContent = localization?.twitter || "";
+        localizedBlog.textContent = localization?.blog || "";
       }
 
       function renderAgents(logs) {
@@ -1210,6 +1312,38 @@
         autoScroll(logContainer);
       }
 
+      function setApprovalState(value) {
+        isApproved = value;
+        if (value === true) {
+          approvalStatusText.textContent = "Approved";
+          approvalStatusText.classList.remove("text-white", "text-error");
+          approvalStatusText.classList.add("text-tertiary");
+          approveBtn.disabled = true;
+          rejectBtn.disabled = true;
+        } else if (value === false) {
+          approvalStatusText.textContent = "Rejected";
+          approvalStatusText.classList.remove("text-white", "text-tertiary");
+          approvalStatusText.classList.add("text-error");
+          approveBtn.disabled = true;
+          rejectBtn.disabled = true;
+        } else {
+          approvalStatusText.textContent = "Awaiting Approval";
+          approvalStatusText.classList.remove("text-tertiary", "text-error");
+          approvalStatusText.classList.add("text-white");
+          approveBtn.disabled = false;
+          rejectBtn.disabled = false;
+        }
+      }
+
+      async function waitForApprovalDecision() {
+        if (isApproved !== null) {
+          return isApproved;
+        }
+        return new Promise((resolve) => {
+          approvalResolver = resolve;
+        });
+      }
+
       function openWorkflowTrace(id) {
         const workflow = cachedWorkflows.find((item) => String(item.id) === String(id));
         if (!workflow || !traceModal || !traceModalContent) return;
@@ -1304,6 +1438,9 @@
           workflowHistory = [];
           showLoginState();
         }
+        setApprovalState(null);
+        approvalContainer.classList.add("hidden");
+        localizationSection.classList.add("hidden");
       });
 
       window.onload = async () => {
@@ -1320,6 +1457,9 @@
         }
         await updateAuthUi();
         resetAgentStates();
+        setApprovalState(null);
+        approvalContainer.classList.add("hidden");
+        localizationSection.classList.add("hidden");
         renderSystemMetrics();
         const { data, error } = await supabaseClient.auth.getUser();
         if (error) {
