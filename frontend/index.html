@@ -185,23 +185,16 @@
       >
         AI Workflow Studio
       </div>
-      <div class="hidden md:flex items-center gap-8">
+      <div class="hidden md:flex items-center gap-6">
         <a id="navStudio" class="text-white border-b-2 border-white py-1" href="javascript:void(0)">Studio</a>
         <a id="navLibrary" class="text-gray-500 hover:bg-[#2a2a2a] transition-colors py-1" href="javascript:void(0)"
-          >Library</a
+          >Workflows</a
         >
         <a id="navAgents" class="text-gray-500 hover:bg-[#2a2a2a] transition-colors py-1" href="javascript:void(0)"
           >Agents</a
         >
-        <a id="navSettings" class="text-gray-500 hover:bg-[#2a2a2a] transition-colors py-1" href="javascript:void(0)"
-          >Settings</a
-        >
       </div>
       <div class="flex items-center gap-4">
-        <span
-          class="material-symbols-outlined cursor-pointer hover:bg-[#2a2a2a] transition-colors p-2"
-          >notifications</span
-        >
         <span
           class="material-symbols-outlined cursor-pointer hover:bg-[#2a2a2a] transition-colors p-2"
           >account_circle</span
@@ -247,7 +240,7 @@
               class="text-gray-400 hover:text-white hover:bg-[#1f1f1f] flex items-center gap-4 px-6 py-3 cursor-pointer transition-colors"
             >
               <span class="material-symbols-outlined">folder_open</span>
-              <span>Library</span>
+              <span>Workflows</span>
             </li>
             <li
               id="navAgentsSide"
@@ -256,14 +249,6 @@
             >
               <span class="material-symbols-outlined">smart_toy</span>
               <span>Agents</span>
-            </li>
-            <li
-              id="navSettingsSide"
-              data-nav-target="settingsSection"
-              class="text-gray-400 hover:text-white hover:bg-[#1f1f1f] flex items-center gap-4 px-6 py-3 cursor-pointer transition-colors"
-            >
-              <span class="material-symbols-outlined">settings</span>
-              <span>Settings</span>
             </li>
           </ul>
         </nav>
@@ -458,46 +443,6 @@
           </div>
         </div>
 
-        <div id="settingsSection" class="hidden p-8 max-w-7xl mx-auto">
-          <div class="bg-surface-container-low border border-outline-variant p-6">
-            <h2 class="font-label text-xs uppercase tracking-[0.2em] text-outline mb-6">
-              Settings
-            </h2>
-
-            <div class="space-y-4">
-              <div class="bg-surface-container border border-outline-variant p-4">
-                <div class="text-xs text-outline">OPENROUTER API</div>
-                <input
-                  type="text"
-                  value="**************"
-                  class="w-full bg-surface-container-low border border-outline-variant p-2 mt-2 text-sm text-on-surface"
-                  readonly
-                />
-              </div>
-
-              <div class="bg-surface-container border border-outline-variant p-4">
-                <div class="text-xs text-outline">LANGSEARCH API</div>
-                <input
-                  type="text"
-                  value="**************"
-                  class="w-full bg-surface-container-low border border-outline-variant p-2 mt-2 text-sm text-on-surface"
-                  readonly
-                />
-              </div>
-
-              <div class="bg-surface-container border border-outline-variant p-4">
-                <div class="flex justify-between items-center mt-1">
-                  <span class="text-sm text-white">Enable Web Verification</span>
-                  <input type="checkbox" checked />
-                </div>
-                <div class="flex justify-between items-center mt-4">
-                  <span class="text-sm text-white">Enable Compliance Scoring</span>
-                  <input type="checkbox" checked />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </main>
     </div>
 
@@ -519,22 +464,20 @@
       const navStudio = document.getElementById("navStudio");
       const navLibrary = document.getElementById("navLibrary");
       const navAgents = document.getElementById("navAgents");
-      const navSettings = document.getElementById("navSettings");
       const navStudioSide = document.getElementById("navStudioSide");
       const navLibrarySide = document.getElementById("navLibrarySide");
       const navAgentsSide = document.getElementById("navAgentsSide");
-      const navSettingsSide = document.getElementById("navSettingsSide");
 
       let workflowHistory = [];
 
       function showSection(sectionId) {
-        const sections = ["studioSection", "librarySection", "agentsSection", "settingsSection"];
+        const sections = ["studioSection", "librarySection", "agentsSection"];
         sections.forEach((id) => document.getElementById(id).classList.add("hidden"));
         document.getElementById(sectionId).classList.remove("hidden");
       }
 
       function setActiveNav(activeId) {
-        const topNavs = ["navStudio", "navLibrary", "navAgents", "navSettings"];
+        const topNavs = ["navStudio", "navLibrary", "navAgents"];
         topNavs.forEach((id) => {
           const el = document.getElementById(id);
           el.classList.remove("text-white", "border-b-2", "border-white");
@@ -549,10 +492,9 @@
           navStudio: navStudioSide,
           navLibrary: navLibrarySide,
           navAgents: navAgentsSide,
-          navSettings: navSettingsSide,
         };
 
-        [navStudioSide, navLibrarySide, navAgentsSide, navSettingsSide].forEach((el) => {
+        [navStudioSide, navLibrarySide, navAgentsSide].forEach((el) => {
           el.classList.remove("bg-[#ffffff]", "text-black", "font-bold");
           el.classList.add("text-gray-400");
         });
@@ -619,11 +561,6 @@
         showSection("agentsSection");
         setActiveNav("navAgents");
       };
-      navSettings.onclick = () => {
-        showSection("settingsSection");
-        setActiveNav("navSettings");
-      };
-
       navStudioSide.onclick = () => {
         showSection("studioSection");
         setActiveNav("navStudio");
@@ -636,10 +573,6 @@
       navAgentsSide.onclick = () => {
         showSection("agentsSection");
         setActiveNav("navAgents");
-      };
-      navSettingsSide.onclick = () => {
-        showSection("settingsSection");
-        setActiveNav("navSettings");
       };
 
       newWorkflowBtn.onclick = () => {
