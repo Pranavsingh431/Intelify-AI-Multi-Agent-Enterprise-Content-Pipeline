@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>AI Workflow Studio - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
@@ -194,7 +195,20 @@
           >Agents</a
         >
       </div>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3">
+        <button
+          id="loginBtn"
+          class="text-[10px] border border-outline-variant px-3 py-1 text-white hover:bg-[#2a2a2a] transition-colors"
+        >
+          Sign in with Google
+        </button>
+        <button
+          id="logoutBtn"
+          class="text-[10px] border border-outline-variant px-3 py-1 text-white hover:bg-[#2a2a2a] transition-colors hidden"
+        >
+          Logout
+        </button>
+        <span id="userEmail" class="text-[10px] text-outline hidden"></span>
         <span
           class="material-symbols-outlined cursor-pointer hover:bg-[#2a2a2a] transition-colors p-2"
           >account_circle</span
@@ -398,6 +412,9 @@
             <h2 class="font-label text-xs uppercase tracking-[0.2em] text-outline mb-6">
               Workflow Library
             </h2>
+            <div id="libraryStatus" class="hidden text-outline text-sm animate-pulse mb-4">
+              Loading workflows...
+            </div>
             <div id="libraryGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="bg-surface-container border border-outline-variant p-4">
                 <div class="text-xs text-outline">Workflow</div>
@@ -467,8 +484,49 @@
       const navStudioSide = document.getElementById("navStudioSide");
       const navLibrarySide = document.getElementById("navLibrarySide");
       const navAgentsSide = document.getElementById("navAgentsSide");
+      const loginBtn = document.getElementById("loginBtn");
+      const logoutBtn = document.getElementById("logoutBtn");
+      const userEmail = document.getElementById("userEmail");
+      const libraryStatus = document.getElementById("libraryStatus");
+
+      const SUPABASE_URL = "https://hwdeernpbylzilzsevzm.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3ZGVlcm5wYnlsemlsenNldnptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNTIwNjAsImV4cCI6MjA4OTkyODA2MH0.SpMDAH8KIr8EasGlN5eMfjZnkGXb23E2u19dcoIsC-M";
+      const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+        },
+      });
 
       let workflowHistory = [];
+      let saveToastTimer = null;
+
+      async function getUser() {
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        const sessionUser = sessionData?.session?.user || null;
+        if (sessionUser) {
+          return sessionUser;
+        }
+        const { data } = await supabaseClient.auth.getUser();
+        return data?.user || null;
+      }
+
+      async function updateAuthUi() {
+        const user = await getUser();
+        if (user) {
+          loginBtn.classList.add("hidden");
+          logoutBtn.classList.remove("hidden");
+          userEmail.classList.remove("hidden");
+          userEmail.textContent = user.email || "Logged in";
+        } else {
+          loginBtn.classList.remove("hidden");
+          logoutBtn.classList.add("hidden");
+          userEmail.classList.add("hidden");
+          userEmail.textContent = "";
+        }
+      }
 
       function showSection(sectionId) {
         const sections = ["studioSection", "librarySection", "agentsSection"];
@@ -504,21 +562,21 @@
         activeSide.classList.remove("text-gray-400");
       }
 
-      function renderLibrary() {
-        if (!workflowHistory.length) {
+      function renderLibrary(workflows = workflowHistory) {
+        if (!workflows.length) {
           libraryGrid.innerHTML = `
-            <div class="bg-surface-container border border-outline-variant p-4">
-              <div class="text-xs text-outline">Workflow</div>
-              <div class="text-sm text-white mt-1">No saved workflows yet.</div>
+            <div class="text-center text-outline mt-10 col-span-full">
+              No workflows yet. Run your first pipeline.
             </div>
           `;
           return;
         }
 
         libraryGrid.innerHTML = "";
-        workflowHistory.forEach((item, index) => {
+        workflows.forEach((item, index) => {
           const card = document.createElement("div");
-          card.className = "bg-surface-container border border-outline-variant p-4";
+          card.className =
+            "bg-surface-container border border-outline-variant p-4 hover:border-white transition-all duration-200 cursor-pointer";
           card.innerHTML = `
             <div class="text-xs text-outline">Workflow</div>
             <div class="text-sm text-white mt-1">${escapeHtml(item.prompt)}</div>
@@ -530,15 +588,25 @@
               Load
             </button>
           `;
+          card.addEventListener("click", () => {
+            const selected = workflows[index];
+            if (!selected) return;
+            textarea.value = selected.fullPrompt || selected.prompt || "";
+            const chars = textarea.value.length;
+            const tokens = Math.ceil(chars / 4);
+            charsCounter.textContent = `CHARS: ${chars} / TOKENS: ${tokens}`;
+            showSection("studioSection");
+            setActiveNav("navStudio");
+          });
           libraryGrid.appendChild(card);
         });
 
         libraryGrid.querySelectorAll("button[data-load-index]").forEach((btn) => {
           btn.addEventListener("click", () => {
             const idx = Number(btn.getAttribute("data-load-index"));
-            const selected = workflowHistory[idx];
+            const selected = workflows[idx];
             if (!selected) return;
-            textarea.value = selected.fullPrompt;
+            textarea.value = selected.fullPrompt || selected.prompt || "";
             const chars = textarea.value.length;
             const tokens = Math.ceil(chars / 4);
             charsCounter.textContent = `CHARS: ${chars} / TOKENS: ${tokens}`;
@@ -575,6 +643,29 @@
         setActiveNav("navAgents");
       };
 
+      loginBtn.onclick = async () => {
+        try {
+          const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+              redirectTo: window.location.origin,
+            },
+          });
+          if (error) {
+            alert(`Login failed: ${error.message}`);
+          }
+        } catch (error) {
+          alert(`Login failed: ${error.message || "Unknown error"}`);
+        }
+      };
+
+      logoutBtn.onclick = async () => {
+        await supabaseClient.auth.signOut();
+        await updateAuthUi();
+        workflowHistory = [];
+        showLoginState();
+      };
+
       newWorkflowBtn.onclick = () => {
         textarea.value = "";
         charsCounter.textContent = "CHARS: 0 / TOKENS: 0";
@@ -604,8 +695,7 @@
         const input = textarea.value.trim();
         if (!input) return;
 
-        runBtn.disabled = true;
-        runBtn.innerText = "Running...";
+        setRunButtonState(true);
 
         try {
           const res = await fetch("http://127.0.0.1:8000/process", {
@@ -622,28 +712,95 @@
           renderOutput(data);
           renderAgents(data.logs || []);
           renderCompliance(data.compliance || { trust_score: 0, claims: [] });
-          saveWorkflow(input, data.compliance || { trust_score: 0 });
+          await saveWorkflow(input, data.generated_content || "", data.compliance || { trust_score: 0 });
           outputContainer.scrollIntoView({ behavior: "smooth", block: "start" });
         } catch (err) {
           console.error(err);
           alert("Error running pipeline");
         }
 
-        runBtn.disabled = false;
-        runBtn.innerHTML =
-          '<span class="material-symbols-outlined text-sm">play_arrow</span> &gt; RUN_PIPELINE';
+        setRunButtonState(false);
       });
 
-      function saveWorkflow(input, compliance) {
+      async function saveWorkflow(input, generatedOutput, compliance) {
         const trust = `${(Number(compliance?.trust_score || 0) * 100).toFixed(0)}%`;
-        workflowHistory.unshift({
+        const localRecord = {
           prompt: input.length > 40 ? `${input.slice(0, 40)}...` : input,
           fullPrompt: input,
           timestamp: "Just now",
           trust,
-        });
+        };
+        workflowHistory.unshift(localRecord);
         workflowHistory = workflowHistory.slice(0, 8);
         renderLibrary();
+
+        const user = await getUser();
+        if (!user) {
+          return;
+        }
+
+        const { error } = await supabaseClient.from("workflows").insert({
+          user_id: user.id,
+          prompt: input,
+          output: generatedOutput,
+          trust_score: Number(compliance?.trust_score || 0),
+        });
+        if (error) {
+          console.error(error);
+          showToast("Failed to save workflow");
+          return;
+        }
+        showToast("Workflow saved");
+        await loadWorkflows();
+      }
+
+      async function loadWorkflows() {
+        setLibraryLoading(true);
+        libraryGrid.innerHTML = "";
+
+        try {
+          const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+          if (userError) {
+            console.error(userError);
+            workflowHistory = [];
+            showLoginState();
+            return;
+          }
+
+          const user = userData?.user;
+          if (!user) {
+            workflowHistory = [];
+            showLoginState();
+            return;
+          }
+
+          const { data, error } = await supabaseClient
+            .from("workflows")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false });
+
+          if (error) {
+            console.error(error);
+            workflowHistory = [];
+            renderLibrary();
+            return;
+          }
+
+          workflowHistory = (Array.isArray(data) ? data : []).map((item) => ({
+            prompt:
+              item.prompt && item.prompt.length > 40
+                ? `${item.prompt.slice(0, 40)}...`
+                : item.prompt || "",
+            fullPrompt: item.prompt || "",
+            timestamp: formatRelativeDate(item.created_at),
+            trust: `${(Number(item.trust_score || 0) * 100).toFixed(0)}%`,
+          }));
+
+          renderLibrary();
+        } finally {
+          setLibraryLoading(false);
+        }
       }
 
       function renderOutput(data) {
@@ -730,7 +887,95 @@
         return String(value).replace(/"/g, "&quot;");
       }
 
-      renderLibrary();
+      function formatRelativeDate(dateString) {
+        if (!dateString) return "Unknown";
+        const created = new Date(dateString);
+        if (Number.isNaN(created.getTime())) return "Unknown";
+        const deltaMs = Date.now() - created.getTime();
+        const deltaMinutes = Math.floor(deltaMs / 60000);
+        if (deltaMinutes < 1) return "Just now";
+        if (deltaMinutes < 60) return `${deltaMinutes} min ago`;
+        const deltaHours = Math.floor(deltaMinutes / 60);
+        if (deltaHours < 24) return `${deltaHours} hr ago`;
+        const deltaDays = Math.floor(deltaHours / 24);
+        return `${deltaDays} day ago`;
+      }
+
+      function setRunButtonState(isRunning) {
+        runBtn.disabled = isRunning;
+        runBtn.innerText = isRunning ? "Running..." : "Run Pipeline";
+      }
+
+      function showToast(message) {
+        let toast = document.getElementById("saveFeedback");
+        if (!toast) {
+          toast = document.createElement("div");
+          toast.id = "saveFeedback";
+          toast.className =
+            "fixed bottom-6 right-6 bg-surface-container border border-outline-variant px-4 py-2 text-sm text-white transition-opacity duration-300 opacity-0";
+          document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.remove("opacity-0");
+        toast.classList.add("opacity-100");
+        if (saveToastTimer) clearTimeout(saveToastTimer);
+        saveToastTimer = setTimeout(() => {
+          toast.classList.remove("opacity-100");
+          toast.classList.add("opacity-0");
+        }, 2000);
+      }
+
+      function showLoginState() {
+        libraryGrid.innerHTML = `
+          <div class="text-center text-outline mt-10 col-span-full">
+            Sign in with Google to view saved workflows.
+          </div>
+        `;
+      }
+
+      function setLibraryLoading(isLoading) {
+        if (isLoading) {
+          libraryStatus.classList.remove("hidden");
+        } else {
+          libraryStatus.classList.add("hidden");
+        }
+      }
+
+      supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+        await updateAuthUi();
+        if (session?.user) {
+          await loadWorkflows();
+        } else {
+          workflowHistory = [];
+          showLoginState();
+        }
+      });
+
+      window.onload = async () => {
+        const params = new URLSearchParams(window.location.search);
+        const authError = params.get("error_description") || params.get("error");
+        if (authError) {
+          let message = authError;
+          try {
+            message = decodeURIComponent(authError);
+          } catch (_error) {
+            message = authError;
+          }
+          alert(`Auth error: ${message}`);
+        }
+        await updateAuthUi();
+        const { data, error } = await supabaseClient.auth.getUser();
+        if (error) {
+          console.error(error);
+          showLoginState();
+          return;
+        }
+        if (data?.user) {
+          await loadWorkflows();
+        } else {
+          showLoginState();
+        }
+      };
     </script>
   </body>
 </html>
