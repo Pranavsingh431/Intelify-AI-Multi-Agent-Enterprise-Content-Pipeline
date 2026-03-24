@@ -865,9 +865,9 @@
       async function delay(ms) {
         await new Promise((resolve) => setTimeout(resolve, ms));
       }
-
+      const API_BASE = "https://content-ops-ai-multi-agent-enterpri.vercel.app";
       async function runContentAgent(input) {
-        const res = await fetch("http://127.0.0.1:8000/process", {
+        const res = await fetch(`${API_BASE}/process`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
