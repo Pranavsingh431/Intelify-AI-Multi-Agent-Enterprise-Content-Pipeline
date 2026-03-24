@@ -865,7 +865,10 @@
       async function delay(ms) {
         await new Promise((resolve) => setTimeout(resolve, ms));
       }
-      const API_BASE = "https://content-ops-ai-multi-agent-enterpri.vercel.app";
+      const API_BASE =
+        window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+          ? "http://127.0.0.1:8000"
+          : "https://contentops-ai-multi-agent-enterprise.onrender.com";
       async function runContentAgent(input) {
         const res = await fetch(`${API_BASE}/process`, {
           method: "POST",
@@ -874,6 +877,9 @@
           },
           body: JSON.stringify({ text: input }),
         });
+        if (!res.ok) {
+          throw new Error(`Pipeline request failed with status ${res.status}`);
+        }
         const response = await res.json();
         return response?.data || response;
       }
