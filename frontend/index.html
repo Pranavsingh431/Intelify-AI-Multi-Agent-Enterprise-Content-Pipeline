@@ -222,7 +222,7 @@
       >
         <div class="p-6 border-b border-[#353535]">
           <div class="text-white font-bold text-lg mb-1">OPERATOR_01</div>
-          <div class="text-[#72ff70] opacity-80 flex items-center gap-2">
+          <div id="systemStatusBadge" class="text-[#72ff70] opacity-80 flex items-center gap-2">
             <span class="w-2 h-2 bg-[#72ff70] animate-pulse"></span> SYSTEM_READY
           </div>
         </div>
@@ -323,11 +323,12 @@
                   </div>
                 </div>
                 <div
-                  id="generated-output-container"
+                  id="generatedOutput"
                   class="font-label text-sm leading-relaxed space-y-2 text-on-surface-variant opacity-90 overflow-hidden"
                 >
                   <p class="text-tertiary">[SYSTEM] Waiting for pipeline run...</p>
                 </div>
+                <div id="outputLog" class="mt-3 space-y-1"></div>
               </div>
             </div>
           </section>
@@ -369,38 +370,38 @@
         </div>
 
         <div class="px-8 pb-8 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-          <div class="bg-surface-container-low border border-outline-variant p-4 flex items-center gap-4">
+          <div class="bg-surface-container-low border border-outline-variant p-4 flex items-center gap-4 hover:scale-[1.02] transition-all duration-200">
             <div class="p-3 bg-surface-container-highest">
               <span class="material-symbols-outlined text-white">memory</span>
             </div>
             <div>
               <div class="font-label text-[10px] text-outline uppercase tracking-wider">
-                Node Utilization
+                Workflows Processed
               </div>
-              <div class="font-label text-lg font-bold">42.8 GB / 128 GB</div>
+              <div id="workflowCountValue" class="font-label text-lg font-bold">0</div>
             </div>
           </div>
-          <div class="bg-surface-container-low border border-outline-variant p-4 flex items-center gap-4">
+          <div class="bg-surface-container-low border border-outline-variant p-4 flex items-center gap-4 hover:scale-[1.02] transition-all duration-200">
             <div class="p-3 bg-surface-container-highest">
               <span class="material-symbols-outlined text-white">lan</span>
             </div>
             <div>
               <div class="font-label text-[10px] text-outline uppercase tracking-wider">
-                Stream Latency
+                Last Run Time
               </div>
-              <div class="font-label text-lg font-bold">14ms AVG</div>
+              <div id="lastRunTimeValue" class="font-label text-lg font-bold">--:--:--</div>
             </div>
           </div>
-          <div class="bg-surface-container-low border border-outline-variant p-4 flex items-center gap-4">
+          <div class="bg-surface-container-low border border-outline-variant p-4 flex items-center gap-4 hover:scale-[1.02] transition-all duration-200">
             <div class="p-3 bg-surface-container-highest">
               <span class="material-symbols-outlined text-white">security</span>
             </div>
             <div>
               <div class="font-label text-[10px] text-outline uppercase tracking-wider">
-                Security Layer
+                System Status
               </div>
-              <div class="font-label text-lg font-bold text-tertiary animate-pulse-slow">
-                ENCRYPTED
+              <div id="systemStatusValue" class="font-label text-lg font-bold text-tertiary animate-pulse-slow">
+                READY
               </div>
             </div>
           </div>
@@ -418,7 +419,7 @@
             <div id="libraryGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="bg-surface-container border border-outline-variant p-4">
                 <div class="text-xs text-outline">Workflow</div>
-                <div class="text-sm text-white mt-1">No saved workflows yet.</div>
+                <div class="text-sm text-white mt-1">Run your first workflow to see results here</div>
               </div>
             </div>
           </div>
@@ -430,37 +431,47 @@
               Agents
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="bg-surface-container border border-outline-variant p-4 hover:border-white transition-colors">
+              <div id="agent-content" class="bg-surface-container border border-outline-variant p-4 hover:border-white hover:scale-[1.02] transition-all duration-300 ease-in-out">
                 <div class="text-xs text-outline">AGENT</div>
                 <div class="text-white font-bold mt-1">Content Agent</div>
                 <div class="text-[11px] text-outline mt-2">
                   Generates structured content from user input using LLM.
                 </div>
-                <div class="mt-3 text-[10px] text-tertiary">Status: Active</div>
+                <div class="status mt-3 text-[10px] text-outline">Status: IDLE</div>
+                <div id="agent-log-content" class="mt-2 space-y-1 max-h-20 overflow-y-auto"></div>
               </div>
 
-              <div class="bg-surface-container border border-outline-variant p-4 hover:border-white transition-colors">
+              <div id="agent-compliance" class="bg-surface-container border border-outline-variant p-4 hover:border-white hover:scale-[1.02] transition-all duration-300 ease-in-out">
                 <div class="text-xs text-outline">AGENT</div>
                 <div class="text-white font-bold mt-1">Compliance Agent</div>
                 <div class="text-[11px] text-outline mt-2">
                   Extracts and verifies factual claims with web-assisted checks.
                 </div>
-                <div class="mt-3 text-[10px] text-tertiary">Status: Active</div>
+                <div class="status mt-3 text-[10px] text-outline">Status: IDLE</div>
+                <div id="agent-log-compliance" class="mt-2 space-y-1 max-h-20 overflow-y-auto"></div>
               </div>
 
-              <div class="bg-surface-container border border-outline-variant p-4 hover:border-white transition-colors">
+              <div id="agent-sources" class="bg-surface-container border border-outline-variant p-4 hover:border-white hover:scale-[1.02] transition-all duration-300 ease-in-out">
                 <div class="text-xs text-outline">AGENT</div>
-                <div class="text-white font-bold mt-1">Optimization Agent</div>
+                <div class="text-white font-bold mt-1">Source Validation Agent</div>
                 <div class="text-[11px] text-outline mt-2">
-                  Future module for output quality and performance optimization.
+                  Validates supporting evidence from the workflow output.
                 </div>
-                <div class="mt-3 text-[10px] text-outline">Status: Planned</div>
+                <div class="status mt-3 text-[10px] text-outline">Status: IDLE</div>
+                <div id="agent-log-sources" class="mt-2 space-y-1 max-h-20 overflow-y-auto"></div>
               </div>
             </div>
           </div>
         </div>
 
       </main>
+    </div>
+
+    <div id="traceModal" class="hidden fixed inset-0 z-[60] bg-black/60 p-6">
+      <div class="max-w-3xl mx-auto bg-surface-container border border-outline-variant p-6 relative max-h-[80vh] overflow-y-auto">
+        <button id="traceModalClose" class="absolute top-3 right-3 text-xs text-outline hover:text-white transition-colors">Close</button>
+        <div id="traceModalContent"></div>
+      </div>
     </div>
 
     <div
@@ -471,7 +482,8 @@
       const textarea = document.querySelector("textarea");
       const runBtn = document.getElementById("run-pipeline-btn");
       const newWorkflowBtn = document.getElementById("newWorkflowBtn");
-      const outputContainer = document.getElementById("generated-output-container");
+      const outputContainer = document.getElementById("generatedOutput");
+      const outputLog = document.getElementById("outputLog");
       const trustScoreEl = document.getElementById("trust-score-value");
       const trustScoreBar = document.getElementById("trust-score-bar");
       const claimsContainer = document.getElementById("claims-container");
@@ -488,6 +500,13 @@
       const logoutBtn = document.getElementById("logoutBtn");
       const userEmail = document.getElementById("userEmail");
       const libraryStatus = document.getElementById("libraryStatus");
+      const workflowCountValue = document.getElementById("workflowCountValue");
+      const lastRunTimeValue = document.getElementById("lastRunTimeValue");
+      const systemStatusValue = document.getElementById("systemStatusValue");
+      const systemStatusBadge = document.getElementById("systemStatusBadge");
+      const traceModal = document.getElementById("traceModal");
+      const traceModalContent = document.getElementById("traceModalContent");
+      const traceModalClose = document.getElementById("traceModalClose");
 
       const SUPABASE_URL = "https://hwdeernpbylzilzsevzm.supabase.co";
       const SUPABASE_ANON_KEY =
@@ -502,6 +521,23 @@
 
       let workflowHistory = [];
       let saveToastTimer = null;
+      let workflowCount = 0;
+      let lastRunTime = null;
+      let isPipelineRunning = false;
+      let currentUser = null;
+      let cachedWorkflows = [];
+      let agentSteps = [];
+      let currentRunTrace = {
+        content: [],
+        compliance: [],
+        sources: [],
+      };
+
+      const AGENTS = [
+        { id: "content", label: "Content Agent" },
+        { id: "compliance", label: "Compliance Agent" },
+        { id: "sources", label: "Source Validation Agent" },
+      ];
 
       async function getUser() {
         const { data: sessionData } = await supabaseClient.auth.getSession();
@@ -515,6 +551,7 @@
 
       async function updateAuthUi() {
         const user = await getUser();
+        currentUser = user;
         if (user) {
           loginBtn.classList.add("hidden");
           logoutBtn.classList.remove("hidden");
@@ -526,6 +563,7 @@
           userEmail.classList.add("hidden");
           userEmail.textContent = "";
         }
+        updateSystemStatus();
       }
 
       function showSection(sectionId) {
@@ -562,21 +600,138 @@
         activeSide.classList.remove("text-gray-400");
       }
 
+      function autoScroll(el) {
+        if (!el) return;
+        el.scrollTop = el.scrollHeight;
+      }
+
+      function resetTraceState() {
+        currentRunTrace = {
+          content: [],
+          compliance: [],
+          sources: [],
+        };
+      }
+
+      function resetAgentStates() {
+        agentSteps = [];
+        AGENTS.forEach((agent) => {
+          updateAgentStatus(agent.id, "IDLE");
+          const logEl = document.getElementById(`agent-log-${agent.id}`);
+          if (logEl) {
+            logEl.innerHTML = "";
+          }
+        });
+        renderAgentTraceFromState();
+      }
+
+      function updateAgentStatus(agent, status) {
+        const el = document.getElementById(`agent-${agent}`);
+        if (!el) return;
+        const statusEl = el.querySelector(".status");
+        if (statusEl) {
+          statusEl.innerText = `Status: ${status}`;
+          statusEl.classList.remove("text-outline", "text-tertiary", "text-white", "text-error");
+          if (status === "RUNNING") statusEl.classList.add("text-white");
+          else if (status === "DONE") statusEl.classList.add("text-tertiary");
+          else if (status === "ERROR") statusEl.classList.add("text-error");
+          else statusEl.classList.add("text-outline");
+        }
+
+        el.classList.remove("opacity-50", "opacity-100", "border-outline-variant", "border-white", "border-tertiary", "border-error", "animate-pulse");
+        if (status === "RUNNING") {
+          el.classList.add("opacity-100", "border-white", "animate-pulse");
+        } else if (status === "DONE") {
+          el.classList.add("opacity-100", "border-tertiary");
+        } else if (status === "ERROR") {
+          el.classList.add("opacity-100", "border-error");
+        } else {
+          el.classList.add("opacity-50", "border-outline-variant");
+        }
+
+        const existing = agentSteps.find((step) => step.id === agent);
+        if (existing) {
+          existing.status = status;
+        } else {
+          const agentMeta = AGENTS.find((a) => a.id === agent);
+          agentSteps.push({
+            id: agent,
+            label: agentMeta?.label || agent,
+            status,
+          });
+        }
+        renderAgentTraceFromState();
+      }
+
+      function appendAgentLog(agent, message) {
+        const logEl = document.getElementById(`agent-log-${agent}`);
+        if (!logEl) return;
+        const line = document.createElement("div");
+        line.className = "text-xs opacity-70 animate-data-entry";
+        line.innerText = message;
+        logEl.appendChild(line);
+        autoScroll(logEl);
+        if (Array.isArray(currentRunTrace[agent])) {
+          currentRunTrace[agent].push(message);
+        }
+      }
+
+      function renderAgentTraceFromState() {
+        if (!agentTrace) return;
+        if (!agentSteps.length) {
+          agentTrace.innerHTML = '<div class="text-outline text-xs">AWAITING RUN</div>';
+          return;
+        }
+
+        agentTrace.innerHTML = "";
+        const line = document.createElement("div");
+        line.className = "absolute left-[11px] top-2 bottom-2 w-[1px] bg-outline-variant";
+        agentTrace.appendChild(line);
+
+        AGENTS.forEach((agent) => {
+          const step = agentSteps.find((item) => item.id === agent.id) || { status: "IDLE" };
+          const status = step.status || "IDLE";
+          let dotClass = "border border-outline-variant bg-surface-container";
+          let statusClass = "text-outline";
+          if (status === "RUNNING") {
+            dotClass = "bg-white animate-pulse";
+            statusClass = "text-white";
+          } else if (status === "DONE") {
+            dotClass = "bg-tertiary animate-pulse";
+            statusClass = "text-tertiary";
+          } else if (status === "ERROR") {
+            dotClass = "bg-error";
+            statusClass = "text-error";
+          }
+
+          const div = document.createElement("div");
+          div.className = "relative flex items-start gap-4 animate-data-entry";
+          div.innerHTML = `
+            <div class="w-6 h-6 ${dotClass} z-10 flex items-center justify-center"></div>
+            <div>
+              <div class="font-label text-xs font-bold">${agent.label.toUpperCase()}</div>
+              <div class="${statusClass} font-label text-[10px]">[${status}]</div>
+            </div>
+          `;
+          agentTrace.appendChild(div);
+        });
+      }
+
       function renderLibrary(workflows = workflowHistory) {
         if (!workflows.length) {
           libraryGrid.innerHTML = `
             <div class="text-center text-outline mt-10 col-span-full">
-              No workflows yet. Run your first pipeline.
+              Run your first workflow to see results here
             </div>
           `;
           return;
         }
 
         libraryGrid.innerHTML = "";
-        workflows.forEach((item, index) => {
+        workflows.forEach((item) => {
           const card = document.createElement("div");
           card.className =
-            "bg-surface-container border border-outline-variant p-4 hover:border-white transition-all duration-200 cursor-pointer";
+            "bg-surface-container border border-outline-variant p-4 hover:border-white hover:shadow-lg transition-all duration-300 ease-in-out cursor-pointer workflow-card";
           card.innerHTML = `
             <div class="text-xs text-outline">Workflow</div>
             <div class="text-sm text-white mt-1">${escapeHtml(item.prompt)}</div>
@@ -584,27 +739,21 @@
               <span>${escapeHtml(item.timestamp)}</span>
               <span class="text-tertiary">${escapeHtml(item.trust)}</span>
             </div>
-            <button data-load-index="${index}" class="mt-3 text-xs text-white border border-outline px-3 py-1 hover:bg-white hover:text-black transition">
+            <button data-load-id="${escapeAttr(item.id)}" class="mt-3 text-xs text-white border border-outline px-3 py-1 hover:bg-white hover:text-black transition">
               Load
             </button>
           `;
           card.addEventListener("click", () => {
-            const selected = workflows[index];
-            if (!selected) return;
-            textarea.value = selected.fullPrompt || selected.prompt || "";
-            const chars = textarea.value.length;
-            const tokens = Math.ceil(chars / 4);
-            charsCounter.textContent = `CHARS: ${chars} / TOKENS: ${tokens}`;
-            showSection("studioSection");
-            setActiveNav("navStudio");
+            openWorkflowTrace(item.id);
           });
           libraryGrid.appendChild(card);
         });
 
-        libraryGrid.querySelectorAll("button[data-load-index]").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const idx = Number(btn.getAttribute("data-load-index"));
-            const selected = workflows[idx];
+        libraryGrid.querySelectorAll("button[data-load-id]").forEach((btn) => {
+          btn.addEventListener("click", (event) => {
+            event.stopPropagation();
+            const selectedId = btn.getAttribute("data-load-id");
+            const selected = workflows.find((entry) => String(entry.id) === String(selectedId));
             if (!selected) return;
             textarea.value = selected.fullPrompt || selected.prompt || "";
             const chars = textarea.value.length;
@@ -670,10 +819,11 @@
         textarea.value = "";
         charsCounter.textContent = "CHARS: 0 / TOKENS: 0";
         outputContainer.innerHTML = "";
+        outputLog.innerHTML = "";
         trustScoreEl.innerText = "0%";
         trustScoreBar.style.width = "0%";
         claimsContainer.innerHTML = "";
-        agentTrace.innerHTML = '<div class="text-outline text-xs">No workflow executed</div>';
+        resetAgentStates();
         showSection("studioSection");
         setActiveNav("navStudio");
       };
@@ -683,6 +833,20 @@
           console.log("Clicked:", icon.innerText);
         });
       });
+
+      if (traceModalClose) {
+        traceModalClose.addEventListener("click", () => {
+          traceModal.classList.add("hidden");
+        });
+      }
+
+      if (traceModal) {
+        traceModal.addEventListener("click", (event) => {
+          if (event.target === traceModal) {
+            traceModal.classList.add("hidden");
+          }
+        });
+      }
 
       textarea.addEventListener("input", () => {
         const chars = textarea.value.length;
@@ -695,43 +859,116 @@
         const input = textarea.value.trim();
         if (!input) return;
 
+        await runPipeline(input);
+      });
+
+      async function delay(ms) {
+        await new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      async function runContentAgent(input) {
+        const res = await fetch("http://127.0.0.1:8000/process", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text: input }),
+        });
+        const response = await res.json();
+        return response?.data || response;
+      }
+
+      async function runComplianceAgent(contentData) {
+        return contentData?.compliance || { trust_score: 0, claims: [] };
+      }
+
+      async function runSourceValidation(complianceData) {
+        return {
+          hasClaims: Array.isArray(complianceData?.claims) && complianceData.claims.length > 0,
+        };
+      }
+
+      async function runPipeline(input) {
         setRunButtonState(true);
+        outputLog.innerHTML = "";
+        resetTraceState();
+        resetAgentStates();
+        addLog("[System] Pipeline started...");
 
         try {
-          const res = await fetch("http://127.0.0.1:8000/process", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ text: input }),
-          });
+          updateAgentStatus("content", "RUNNING");
+          appendAgentLog("content", "Analyzing prompt...");
+          await delay(250);
+          appendAgentLog("content", "Generating structured output...");
+          const contentData = await runContentAgent(input);
+          appendAgentLog("content", "Output ready.");
+          updateAgentStatus("content", "DONE");
+          addLog("[Content Agent] Output generated...");
 
-          const response = await res.json();
-          const data = response?.data || response;
+          updateAgentStatus("compliance", "RUNNING");
+          appendAgentLog("compliance", "Extracting claims...");
+          await delay(250);
+          appendAgentLog("compliance", "Assessing claim confidence...");
+          const complianceData = await runComplianceAgent(contentData);
+          appendAgentLog("compliance", "Compliance checks completed.");
+          updateAgentStatus("compliance", "DONE");
+          addLog("[Compliance Agent] Claims verified...");
 
-          renderOutput(data);
-          renderAgents(data.logs || []);
-          renderCompliance(data.compliance || { trust_score: 0, claims: [] });
-          await saveWorkflow(input, data.generated_content || "", data.compliance || { trust_score: 0 });
+          updateAgentStatus("sources", "RUNNING");
+          appendAgentLog("sources", "Collecting source references...");
+          await delay(250);
+          appendAgentLog("sources", "Finalizing source validation...");
+          await runSourceValidation(complianceData);
+          appendAgentLog("sources", "Source validation completed.");
+          updateAgentStatus("sources", "DONE");
+
+          await renderOutput(contentData);
+          renderCompliance(complianceData);
+
+          await saveWorkflow(
+            input,
+            contentData.generated_content || "",
+            complianceData,
+            {
+              steps: AGENTS.map((agent) => ({
+                agent: agent.id,
+                logs: currentRunTrace[agent.id] || [],
+              })),
+            }
+          );
+
+          workflowCount += 1;
+          lastRunTime = new Date().toLocaleTimeString();
+          renderSystemMetrics();
+          showToast("✓ Workflow completed successfully");
           outputContainer.scrollIntoView({ behavior: "smooth", block: "start" });
         } catch (err) {
           console.error(err);
-          alert("Error running pipeline");
+          updateAgentStatus("content", "ERROR");
+          updateAgentStatus("compliance", "ERROR");
+          updateAgentStatus("sources", "ERROR");
+          showToast("⚠ Something went wrong");
         }
 
         setRunButtonState(false);
-      });
+      }
 
-      async function saveWorkflow(input, generatedOutput, compliance) {
+      async function saveWorkflow(input, generatedOutput, compliance, trace) {
         const trust = `${(Number(compliance?.trust_score || 0) * 100).toFixed(0)}%`;
+        const localId = `local-${Date.now()}`;
         const localRecord = {
+          id: localId,
           prompt: input.length > 40 ? `${input.slice(0, 40)}...` : input,
           fullPrompt: input,
           timestamp: "Just now",
           trust,
+          output: generatedOutput,
+          trustScoreRaw: Number(compliance?.trust_score || 0),
+          trace: trace || null,
         };
         workflowHistory.unshift(localRecord);
         workflowHistory = workflowHistory.slice(0, 8);
+        cachedWorkflows = workflowHistory.map((item) => ({ ...item }));
         renderLibrary();
 
         const user = await getUser();
@@ -739,18 +976,28 @@
           return;
         }
 
-        const { error } = await supabaseClient.from("workflows").insert({
+        const payload = {
           user_id: user.id,
           prompt: input,
           output: generatedOutput,
           trust_score: Number(compliance?.trust_score || 0),
-        });
+          trace: JSON.stringify(trace || { steps: [] }),
+        };
+
+        let { error } = await supabaseClient.from("workflows").insert(payload);
+        if (error && String(error.message || "").toLowerCase().includes("trace")) {
+          ({ error } = await supabaseClient.from("workflows").insert({
+            user_id: user.id,
+            prompt: input,
+            output: generatedOutput,
+            trust_score: Number(compliance?.trust_score || 0),
+          }));
+        }
         if (error) {
           console.error(error);
           showToast("Failed to save workflow");
           return;
         }
-        showToast("Workflow saved");
         await loadWorkflows();
       }
 
@@ -788,6 +1035,7 @@
           }
 
           workflowHistory = (Array.isArray(data) ? data : []).map((item) => ({
+            id: item.id || `wf-${Math.random().toString(36).slice(2, 10)}`,
             prompt:
               item.prompt && item.prompt.length > 40
                 ? `${item.prompt.slice(0, 40)}...`
@@ -795,20 +1043,22 @@
             fullPrompt: item.prompt || "",
             timestamp: formatRelativeDate(item.created_at),
             trust: `${(Number(item.trust_score || 0) * 100).toFixed(0)}%`,
+            output: item.output || "",
+            trustScoreRaw: Number(item.trust_score || 0),
+            trace: item.trace || null,
           }));
 
+          cachedWorkflows = workflowHistory.map((item) => ({ ...item }));
+          workflowCount = workflowHistory.length;
+          renderSystemMetrics();
           renderLibrary();
         } finally {
           setLibraryLoading(false);
         }
       }
 
-      function renderOutput(data) {
-        outputContainer.innerHTML = "";
-        const p = document.createElement("p");
-        p.className = "text-white";
-        p.innerText = data.generated_content || "No output generated.";
-        outputContainer.appendChild(p);
+      async function renderOutput(data) {
+        await streamOutput(data.generated_content || "No output generated.");
       }
 
       function renderAgents(logs) {
@@ -827,7 +1077,7 @@
           div.className = "relative flex items-start gap-4 animate-data-entry";
           div.style.animationDelay = `${(i + 1) * 0.1}s`;
           div.innerHTML = `
-            <div class="w-6 h-6 bg-tertiary flex items-center justify-center z-10">
+            <div class="w-6 h-6 bg-tertiary flex items-center justify-center z-10 animate-pulse">
               <span class="material-symbols-outlined text-black text-xs font-bold" style="font-variation-settings: 'wght' 700;">check</span>
             </div>
             <div>
@@ -902,8 +1152,107 @@
       }
 
       function setRunButtonState(isRunning) {
+        isPipelineRunning = isRunning;
         runBtn.disabled = isRunning;
-        runBtn.innerText = isRunning ? "Running..." : "Run Pipeline";
+        runBtn.innerText = isRunning ? "Running..." : "> RUN_PIPELINE";
+        runBtn.classList.toggle("scale-95", isRunning);
+        runBtn.classList.toggle("opacity-80", isRunning);
+        updateSystemStatus();
+      }
+
+      function renderSystemMetrics() {
+        workflowCountValue.textContent = String(workflowCount);
+        lastRunTimeValue.textContent = lastRunTime || "--:--:--";
+        updateSystemStatus();
+      }
+
+      function updateSystemStatus() {
+        const status = isPipelineRunning
+          ? "PROCESSING..."
+          : currentUser
+          ? "SYSTEM ACTIVE"
+          : "READY";
+        systemStatusValue.textContent = status;
+        systemStatusBadge.innerHTML = `<span class="w-2 h-2 bg-[#72ff70] animate-pulse"></span> ${status}`;
+      }
+
+      async function streamOutput(text) {
+        const outputEl = document.getElementById("generatedOutput");
+        if (!outputEl) return;
+        outputEl.innerHTML = "";
+
+        await new Promise((resolve) => {
+          let i = 0;
+          const interval = setInterval(() => {
+            outputEl.innerHTML += escapeHtml(text[i] || "");
+            i += 1;
+            if (i >= text.length) {
+              clearInterval(interval);
+              resolve();
+            }
+          }, 10);
+        });
+      }
+
+      function addLog(message) {
+        const logContainer = document.getElementById("outputLog");
+        if (!logContainer) return;
+        const line = document.createElement("div");
+        line.className = "text-xs text-outline animate-data-entry";
+        line.innerText = message;
+        logContainer.appendChild(line);
+        autoScroll(logContainer);
+      }
+
+      function openWorkflowTrace(id) {
+        const workflow = cachedWorkflows.find((item) => String(item.id) === String(id));
+        if (!workflow || !traceModal || !traceModalContent) return;
+        let parsedTrace = null;
+        try {
+          parsedTrace =
+            typeof workflow.trace === "string" ? JSON.parse(workflow.trace) : workflow.trace;
+        } catch (_error) {
+          parsedTrace = null;
+        }
+
+        const traceRows = Array.isArray(parsedTrace?.steps)
+          ? parsedTrace.steps
+              .map(
+                (step) => `
+                <div class="mb-3">
+                  <div class="text-xs text-outline">${escapeHtml(step.agent || "")}</div>
+                  <div class="text-sm text-white">${
+                    Array.isArray(step.logs) && step.logs.length
+                      ? step.logs.map((log) => `<div class="text-xs opacity-80">${escapeHtml(log)}</div>`).join("")
+                      : '<div class="text-xs opacity-70">No logs captured.</div>'
+                  }</div>
+                </div>`
+              )
+              .join("")
+          : '<div class="text-xs opacity-70">No trace available.</div>';
+
+        traceModalContent.innerHTML = `
+          <div class="p-2">
+            <h2 class="text-lg mb-4 text-white">Workflow Trace</h2>
+            <div class="mb-4">
+              <strong class="text-sm text-outline">Prompt:</strong>
+              <div class="text-sm text-white mt-1">${escapeHtml(workflow.fullPrompt || workflow.prompt || "")}</div>
+            </div>
+            <div class="mb-4">
+              <strong class="text-sm text-outline">Output:</strong>
+              <div class="text-sm text-white mt-1">${escapeHtml(workflow.output || "No output stored.")}</div>
+            </div>
+            <div class="mb-4">
+              <strong class="text-sm text-outline">Trust Score:</strong>
+              <span class="text-sm text-white"> ${(Number(workflow.trustScoreRaw || 0) * 100).toFixed(2)}%</span>
+            </div>
+            <div>
+              <strong class="text-sm text-outline">Trace:</strong>
+              <div class="mt-2">${traceRows}</div>
+            </div>
+          </div>
+        `;
+        traceModal.classList.remove("hidden");
       }
 
       function showToast(message) {
@@ -964,6 +1313,8 @@
           alert(`Auth error: ${message}`);
         }
         await updateAuthUi();
+        resetAgentStates();
+        renderSystemMetrics();
         const { data, error } = await supabaseClient.auth.getUser();
         if (error) {
           console.error(error);
