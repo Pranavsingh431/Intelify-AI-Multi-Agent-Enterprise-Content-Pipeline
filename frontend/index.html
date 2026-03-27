@@ -299,6 +299,9 @@
                 ></textarea>
                 <div class="absolute bottom-4 right-4 flex items-center gap-4">
                   <span class="font-label text-[10px] text-outline">CHARS: 0 / TOKENS: 0</span>
+                  <div id="systemStatus" class="text-xs text-outline">
+                    READY
+                  </div>
                   <button
                     id="run-pipeline-btn"
                     class="bg-primary text-on-primary-container px-6 py-2 font-label font-bold text-sm tracking-tighter hover:bg-primary-container transition-all flex items-center gap-2 btn-glitch-hover"
@@ -545,6 +548,7 @@
       const lastRunTimeValue = document.getElementById("lastRunTimeValue");
       const systemStatusValue = document.getElementById("systemStatusValue");
       const systemStatusBadge = document.getElementById("systemStatusBadge");
+      const systemStatusInline = document.getElementById("systemStatus");
       const traceModal = document.getElementById("traceModal");
       const traceModalContent = document.getElementById("traceModalContent");
       const traceModalClose = document.getElementById("traceModalClose");
@@ -978,12 +982,45 @@
       async function delay(ms) {
         await new Promise((resolve) => setTimeout(resolve, ms));
       }
+
+      async function fetchWithRetry(url, options, retries = 3) {
+        const statusDiv = systemStatusInline;
+
+        for (let i = 0; i < retries; i += 1) {
+          try {
+            if (statusDiv) {
+              statusDiv.innerText =
+                i === 0
+                  ? "Waking up server..."
+                  : "Waking up server (this may take a few seconds)...";
+            }
+
+            const res = await fetch(url, options);
+            if (!res.ok) {
+              throw new Error(`HTTP_${res.status}`);
+            }
+
+            if (statusDiv) {
+              statusDiv.innerText = "SYSTEM ACTIVE";
+            }
+            return res;
+          } catch (err) {
+            if (i === retries - 1) {
+              const retryError = new Error("FETCH_RETRY_EXHAUSTED");
+              retryError.cause = err;
+              throw retryError;
+            }
+            await delay(3000);
+          }
+        }
+      }
       const API_BASE =
         window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
           ? "http://127.0.0.1:8000"
           : "https://contentops-ai-multi-agent-enterprise.onrender.com";
       async function runContentAgent(input) {
-        const res = await fetch(`${API_BASE}/process`, {
+        runBtn.innerText = "Initializing pipeline...";
+        const res = await fetchWithRetry(`${API_BASE}/process`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1089,7 +1126,11 @@
           updateAgentStatus("compliance", "ERROR");
           updateAgentStatus("approval", "FAILED");
           updateAgentStatus("localization", "ERROR");
-          showToast("⚠ Something went wrong");
+          if (err?.message === "FETCH_RETRY_EXHAUSTED") {
+            showToast("Server is taking too long. Please try again.");
+          } else {
+            showToast("⚠ Something went wrong");
+          }
         }
 
         setRunButtonState(false);
@@ -1325,6 +1366,9 @@
             : "READY");
         systemStatusValue.textContent = status;
         systemStatusBadge.innerHTML = `<span class="w-2 h-2 bg-[#72ff70] animate-pulse"></span> ${status}`;
+        if (systemStatusInline) {
+          systemStatusInline.textContent = status;
+        }
       }
 
       async function streamOutput(text) {
