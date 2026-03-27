@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="frontend/public/logo.png" alt="Intelify Logo" width="350"/>
+</p>
+
 # Intelify - AI Workflow Studio
 
 A full stack, multi-agent content pipeline with a dark operations dashboard.
