@@ -334,7 +334,9 @@
                   <div class="flex gap-2">
                     <button id="approveBtn" class="text-xs text-white border border-outline px-3 py-1 hover:bg-white hover:text-black transition">Approve</button>
                     <button id="rejectBtn" class="text-xs text-white border border-outline px-3 py-1 hover:bg-white hover:text-black transition">Reject</button>
+                    <button id="rerunBtn" class="hidden text-xs text-white border border-outline px-3 py-1 hover:bg-white hover:text-black transition">Run pipeline again</button>
                   </div>
+                  <div id="finalDecisionMessage" class="mt-2 text-xs text-outline"></div>
                 </div>
               </div>
             </div>
@@ -489,6 +491,16 @@
                 <div class="status mt-3 text-[10px] text-outline">Status: IDLE</div>
                 <div id="agent-log-localization" class="mt-2 space-y-1 max-h-20 overflow-y-auto"></div>
               </div>
+
+              <div id="agent-approval" class="bg-surface-container border border-outline-variant p-4 hover:border-white hover:scale-[1.02] transition-all duration-300 ease-in-out">
+                <div class="text-xs text-outline">AGENT</div>
+                <div class="text-white font-bold mt-1">Approval Agent</div>
+                <div class="text-[11px] text-outline mt-2">
+                  Handles human validation before publishing.
+                </div>
+                <div class="status mt-3 text-[10px] text-outline">Status: IDLE</div>
+                <div id="agent-log-approval" class="mt-2 space-y-1 max-h-20 overflow-y-auto"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -540,6 +552,8 @@
       const approvalStatusText = document.getElementById("approvalStatusText");
       const approveBtn = document.getElementById("approveBtn");
       const rejectBtn = document.getElementById("rejectBtn");
+      const rerunBtn = document.getElementById("rerunBtn");
+      const finalDecisionMessage = document.getElementById("finalDecisionMessage");
       const localizationSection = document.getElementById("localizationSection");
       const localizedLinkedin = document.getElementById("localizedLinkedin");
       const localizedTwitter = document.getElementById("localizedTwitter");
@@ -562,13 +576,14 @@
       let lastRunTime = null;
       let isPipelineRunning = false;
       let currentUser = null;
+      let decisionStatus = null;
       let cachedWorkflows = [];
       let agentSteps = [];
       let currentRunTrace = {
         content: [],
         compliance: [],
-        approval: [],
         localization: [],
+        approval: [],
       };
       let isApproved = null;
       let approvalResolver = null;
@@ -576,8 +591,8 @@
       const AGENTS = [
         { id: "content", label: "Content Agent" },
         { id: "compliance", label: "Compliance Agent" },
-        { id: "approval", label: "Approval Step" },
         { id: "localization", label: "Localization Agent" },
+        { id: "approval", label: "Approval Agent" },
       ];
 
       async function getUser() {
@@ -650,8 +665,8 @@
         currentRunTrace = {
           content: [],
           compliance: [],
-          approval: [],
           localization: [],
+          approval: [],
         };
       }
 
@@ -675,17 +690,20 @@
             statusEl.innerText = `Status: ${status}`;
             statusEl.classList.remove("text-outline", "text-tertiary", "text-white", "text-error");
             if (status === "RUNNING") statusEl.classList.add("text-white");
+            else if (status === "WAITING") statusEl.classList.add("text-white");
             else if (status === "DONE") statusEl.classList.add("text-tertiary");
-            else if (status === "ERROR") statusEl.classList.add("text-error");
+            else if (status === "ERROR" || status === "FAILED") statusEl.classList.add("text-error");
             else statusEl.classList.add("text-outline");
           }
 
           el.classList.remove("opacity-50", "opacity-100", "border-outline-variant", "border-white", "border-tertiary", "border-error", "animate-pulse");
           if (status === "RUNNING") {
             el.classList.add("opacity-100", "border-white", "animate-pulse");
+          } else if (status === "WAITING") {
+            el.classList.add("opacity-100", "border-white");
           } else if (status === "DONE") {
             el.classList.add("opacity-100", "border-tertiary");
-          } else if (status === "ERROR") {
+          } else if (status === "ERROR" || status === "FAILED") {
             el.classList.add("opacity-100", "border-error");
           } else {
             el.classList.add("opacity-50", "border-outline-variant");
@@ -740,10 +758,13 @@
           if (status === "RUNNING") {
             dotClass = "bg-white animate-pulse";
             statusClass = "text-white";
+          } else if (status === "WAITING") {
+            dotClass = "bg-white";
+            statusClass = "text-white";
           } else if (status === "DONE") {
             dotClass = "bg-tertiary animate-pulse";
             statusClass = "text-tertiary";
-          } else if (status === "ERROR") {
+          } else if (status === "ERROR" || status === "FAILED") {
             dotClass = "bg-error";
             statusClass = "text-error";
           }
@@ -869,7 +890,10 @@
         claimsContainer.innerHTML = "";
         setApprovalState(null);
         approvalContainer.classList.add("hidden");
+        approvalContainer.classList.remove("border-tertiary");
+        rerunBtn.classList.add("hidden");
         localizationSection.classList.add("hidden");
+        finalDecisionMessage.textContent = "";
         localizedLinkedin.textContent = "";
         localizedTwitter.textContent = "";
         localizedBlog.textContent = "";
@@ -907,7 +931,11 @@
       if (approveBtn) {
         approveBtn.onclick = () => {
           setApprovalState(true);
-          showToast("Approved");
+          updateAgentStatus("approval", "DONE");
+          appendAgentLog("approval", "Approved by user.");
+          showToast("Approved - Ready for publishing");
+          showFinalMessage("Good to go. You can publish this content.");
+          rerunBtn.classList.add("hidden");
           if (approvalResolver) {
             approvalResolver(true);
             approvalResolver = null;
@@ -918,11 +946,24 @@
       if (rejectBtn) {
         rejectBtn.onclick = () => {
           setApprovalState(false);
-          showToast("Rejected");
+          updateAgentStatus("approval", "FAILED");
+          appendAgentLog("approval", "Rejected by user. Needs improvement.");
+          showToast("Rejected - Needs improvement");
+          showFinalMessage("Try refining the prompt or improving clarity and claims.");
+          rerunBtn.classList.remove("hidden");
           if (approvalResolver) {
             approvalResolver(false);
             approvalResolver = null;
           }
+        };
+      }
+
+      if (rerunBtn) {
+        rerunBtn.onclick = () => {
+          showSection("studioSection");
+          setActiveNav("navStudio");
+          textarea.focus();
+          textarea.scrollIntoView({ behavior: "smooth", block: "center" });
         };
       }
 
@@ -976,8 +1017,12 @@
         resetTraceState();
         resetAgentStates();
         setApprovalState(null);
+        decisionStatus = null;
         approvalContainer.classList.add("hidden");
+        approvalContainer.classList.remove("border-tertiary");
+        rerunBtn.classList.add("hidden");
         localizationSection.classList.add("hidden");
+        finalDecisionMessage.textContent = "";
         addLog("[System] Pipeline started...");
 
         try {
@@ -998,32 +1043,28 @@
           appendAgentLog("compliance", "Compliance checks completed.");
           updateAgentStatus("compliance", "DONE");
           addLog("[Compliance Agent] Claims verified...");
-          renderCompliance(complianceData);
-
-          updateAgentStatus("approval", "RUNNING");
-          appendAgentLog("approval", "Awaiting human decision...");
-          approvalContainer.classList.remove("hidden");
-          setApprovalState(null);
-          const approved = await waitForApprovalDecision();
-
-          if (!approved) {
-            updateAgentStatus("approval", "ERROR");
-            appendAgentLog("approval", "Rejected by user. Pipeline halted.");
-            setRunButtonState(false);
-            return;
-          }
-
-          updateAgentStatus("approval", "DONE");
-          appendAgentLog("approval", "Approved by user.");
 
           updateAgentStatus("localization", "RUNNING");
           appendAgentLog("localization", "Preparing localized variants...");
           const localizationData = await runLocalizationAgent(contentData);
           appendAgentLog("localization", "Localization output ready.");
           updateAgentStatus("localization", "DONE");
+          await renderOutput(contentData);
+          renderCompliance(complianceData);
           renderLocalization(localizationData);
 
-          await renderOutput(contentData);
+          await delay(400);
+          approvalContainer.classList.remove("hidden");
+          approvalContainer.classList.add("border-tertiary");
+          setRunButtonState(false);
+          updateAgentStatus("approval", "WAITING");
+          appendAgentLog("approval", "Awaiting human decision...");
+          setApprovalState(null);
+          const approved = await waitForApprovalDecision();
+
+          if (!approved) {
+            return;
+          }
 
           await saveWorkflow(
             input,
@@ -1046,7 +1087,7 @@
           console.error(err);
           updateAgentStatus("content", "ERROR");
           updateAgentStatus("compliance", "ERROR");
-          updateAgentStatus("approval", "ERROR");
+          updateAgentStatus("approval", "FAILED");
           updateAgentStatus("localization", "ERROR");
           showToast("⚠ Something went wrong");
         }
@@ -1275,11 +1316,13 @@
       }
 
       function updateSystemStatus() {
-        const status = isPipelineRunning
-          ? "PROCESSING..."
-          : currentUser
-          ? "SYSTEM ACTIVE"
-          : "READY";
+        const status =
+          decisionStatus ||
+          (isPipelineRunning
+            ? "PROCESSING..."
+            : currentUser
+            ? "SYSTEM ACTIVE"
+            : "READY");
         systemStatusValue.textContent = status;
         systemStatusBadge.innerHTML = `<span class="w-2 h-2 bg-[#72ff70] animate-pulse"></span> ${status}`;
       }
@@ -1315,24 +1358,32 @@
       function setApprovalState(value) {
         isApproved = value;
         if (value === true) {
+          decisionStatus = "APPROVED";
           approvalStatusText.textContent = "Approved";
           approvalStatusText.classList.remove("text-white", "text-error");
           approvalStatusText.classList.add("text-tertiary");
           approveBtn.disabled = true;
           rejectBtn.disabled = true;
         } else if (value === false) {
+          decisionStatus = "REJECTED";
           approvalStatusText.textContent = "Rejected";
           approvalStatusText.classList.remove("text-white", "text-tertiary");
           approvalStatusText.classList.add("text-error");
           approveBtn.disabled = true;
           rejectBtn.disabled = true;
         } else {
+          decisionStatus = null;
           approvalStatusText.textContent = "Awaiting Approval";
           approvalStatusText.classList.remove("text-tertiary", "text-error");
           approvalStatusText.classList.add("text-white");
           approveBtn.disabled = false;
           rejectBtn.disabled = false;
         }
+        updateSystemStatus();
+      }
+
+      function showFinalMessage(message) {
+        finalDecisionMessage.textContent = message;
       }
 
       async function waitForApprovalDecision() {
@@ -1440,6 +1491,8 @@
         }
         setApprovalState(null);
         approvalContainer.classList.add("hidden");
+        approvalContainer.classList.remove("border-tertiary");
+        rerunBtn.classList.add("hidden");
         localizationSection.classList.add("hidden");
       });
 
@@ -1459,6 +1512,8 @@
         resetAgentStates();
         setApprovalState(null);
         approvalContainer.classList.add("hidden");
+        approvalContainer.classList.remove("border-tertiary");
+        rerunBtn.classList.add("hidden");
         localizationSection.classList.add("hidden");
         renderSystemMetrics();
         const { data, error } = await supabaseClient.auth.getUser();
