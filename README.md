@@ -1,4 +1,4 @@
-# AI Workflow Studio
+# Intelify - AI Workflow Studio
 
 A full stack, multi-agent content pipeline with a dark operations dashboard.
 
